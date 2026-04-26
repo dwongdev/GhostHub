@@ -4,17 +4,22 @@
  */
 
 import { getConfigValue } from '../utils/configManager.js';
+import { Module, createStateStore, $ } from '../libs/ragot.esm.min.js';
 
 // DOM element references
-const categoryView = document.getElementById('categoryView');
-const mediaView = document.getElementById('mediaView');
-const categoryList = document.getElementById('categoryList');
-const tiktokContainer = document.getElementById('tiktok-container');
-const spinnerContainer = document.querySelector('#tiktok-container .spinner-container');
-const syncToggleBtn = document.getElementById('sync-toggle-btn');
+const gridContainer = $('#grid-container');
+const mediaViewer = $('#media-viewer');
+const spinnerContainer = $('#media-viewer .spinner-container');
+const syncToggleBtn = $('#sync-toggle-btn');
 
 // Configuration constants
 const MOBILE_DEVICE = window.innerWidth <= 768; // Detect if we're on a mobile device
+
+// Low memory client device detection (for mobile phones, tablets, etc.)
+// Note: Pi runs as server - this detects the CLIENT device capabilities
+const LOW_MEMORY_DEVICE = navigator.deviceMemory && navigator.deviceMemory <= 2;
+
+document.documentElement.classList.toggle('gh-low-memory', !!LOW_MEMORY_DEVICE);
 
 // Load configuration values using getConfigValue, with original values as fallbacks
 const MEDIA_PER_PAGE_DESKTOP_DEFAULT = 5;
@@ -24,17 +29,17 @@ const LOAD_MORE_THRESHOLD_MOBILE_DEFAULT = 2;
 const RENDER_WINDOW_SIZE_DEFAULT = 0;
 const MOBILE_CLEANUP_INTERVAL_DEFAULT = 60000;
 const MOBILE_FETCH_TIMEOUT_DEFAULT = 15000;
-const MAX_CACHE_SIZE_PYTHON_DEFAULT = 50; // Default from python_config if not passed via window.appConfig
+const MAX_CACHE_SIZE_PYTHON_DEFAULT = 50;
 const MAX_CACHE_SIZE_MOBILE_DEFAULT = 10;
 const MAX_CACHE_SIZE_DESKTOP_DEFAULT = 50;
 
 // Make MEDIA_PER_PAGE a function to get the value on demand
 function getMediaPerPage() {
-    return getConfigValue('javascript_config.core_app.media_per_page_desktop', 
-               getConfigValue('javascript_config.core_app.media_per_page_mobile', 
-                              MEDIA_PER_PAGE_DESKTOP_DEFAULT
-                             )
-           );
+    return getConfigValue('javascript_config.core_app.media_per_page_desktop',
+        getConfigValue('javascript_config.core_app.media_per_page_mobile',
+            MEDIA_PER_PAGE_DESKTOP_DEFAULT
+        )
+    );
 }
 
 const LOAD_MORE_THRESHOLD = MOBILE_DEVICE ?
@@ -48,176 +53,235 @@ const MOBILE_CLEANUP_INTERVAL = getConfigValue('javascript_config.core_app.mobil
 const MOBILE_FETCH_TIMEOUT = getConfigValue('javascript_config.core_app.mobile_fetch_timeout', MOBILE_FETCH_TIMEOUT_DEFAULT);
 
 // Cache size configuration
-const MAX_CACHE_SIZE = (function() {
-    // 1. Try to get from window.appConfig (set by configManager.js from /api/config)
+const MAX_CACHE_SIZE = (function () {
+    // 1. Try to get from fetched config (configManager.js from /api/config)
     let cacheSize = getConfigValue('python_config.MAX_CACHE_SIZE', null);
     if (cacheSize !== null && typeof cacheSize === 'number') {
         console.log(`Using MAX_CACHE_SIZE from appConfig (python_config): ${cacheSize}`);
         return cacheSize;
     }
 
-    // 2. Fallback to device-specific defaults (original logic, slightly adapted)
+    // 2. Fallback to device-specific defaults based on CLIENT device
     let defaultCacheSize = MOBILE_DEVICE ? MAX_CACHE_SIZE_MOBILE_DEFAULT : MAX_CACHE_SIZE_DESKTOP_DEFAULT;
 
     if (navigator.deviceMemory) {
-        console.log(`Device memory reported: ${navigator.deviceMemory} GB`);
+        console.log(`Client device memory: ${navigator.deviceMemory} GB`);
         if (navigator.deviceMemory >= 8) {
             defaultCacheSize = MOBILE_DEVICE ? 20 : 100;
         } else if (navigator.deviceMemory >= 4) {
             defaultCacheSize = MOBILE_DEVICE ? 15 : 75;
+        } else if (navigator.deviceMemory <= 2) {
+            // Very low memory client - use conservative cache
+            defaultCacheSize = MOBILE_DEVICE ? 5 : 10;
         }
-        console.log(`Adjusted MAX_CACHE_SIZE based on device memory: ${defaultCacheSize}`);
+        console.log(`Adjusted MAX_CACHE_SIZE based on client memory: ${defaultCacheSize}`);
     } else {
-         console.log(`Using default MAX_CACHE_SIZE (no deviceMemory API or python_config): ${defaultCacheSize}`);
+        console.log(`Using default MAX_CACHE_SIZE: ${defaultCacheSize}`);
     }
     return defaultCacheSize;
 })();
 
 
+const INITIAL_APP_STATE = {
+    isAdmin: false,
+    config: {},
+    socket: null,
+    activeProfileId: null,
+    activeProfileName: null,
+    activeProfileColor: null,
+    activeProfileIcon: null,
+    currentCategoryId: null,
+    currentPage: 1,
+    isLoading: false,
+    hasMoreMedia: true,
+    asyncIndexingActive: false,
+    fullMediaList: [],
+    mediaUrlSet: new Set(), // O(1) lookup for duplicate detection
+    currentMediaIndex: 0,
+    // Sync mode variables
+    syncModeEnabled: false,
+    isHost: false,
+    navigationDisabled: false, // Flag to disable navigation for guests in sync mode
+    syncPollingInterval: null,
+    // Media loading optimization variables
+    preloadQueue: [],
+    isPreloading: false,
+    lastCleanupTime: Date.now(),
+    currentFetchController: null,
+    controlsContainer: null,
+    // Mobile optimization variables
+    cleanupInterval: null,
+    fetchTimeouts: {}
+};
+
+// Canonical mutable store for app-level shared state
+const appStore = createStateStore(INITIAL_APP_STATE, { name: 'appState' });
+const appState = appStore.getState();
+
+// Register named app-level actions on the store.
+// These are the only correct way to perform tracked mutations from outside this module.
+// Callers: appStore.actions.setField('key', value) or appStore.dispatch('setField', 'key', value).
+// Source metadata is injected automatically via the action name.
+appStore.registerActions({
+    setField(store, key, value) {
+        store.set(key, value, { source: `appActions.setField:${key}` });
+    },
+    patchState(store, partial) {
+        store.setState(partial, { source: 'appActions.patchState' });
+    },
+    batchState(store, mutator) {
+        store.batch(mutator, { source: 'appActions.batchState' });
+    },
+    compareAndSet(store, path, expectedValue, nextValue) {
+        return store.compareAndSet(path, expectedValue, nextValue, { source: 'appActions.compareAndSet' });
+    },
+});
+
 // Main application object
 const app = {
-    // Application state
-    state: {
-        currentCategoryId: null,
-        currentPage: 1,
-        isLoading: false,
-        hasMoreMedia: true,
-        fullMediaList: [],
-        currentMediaIndex: 0,
-        // Sync mode variables
-        syncModeEnabled: false,
-        isHost: false,
-        navigationDisabled: false, // Flag to disable navigation for guests in sync mode
-        syncPollingInterval: null,
-        // Media loading optimization variables
-        preloadQueue: [],
-        isPreloading: false,
-        lastCleanupTime: Date.now(),
-        currentFetchController: null,
-        controlsContainer: null,
-        // Mobile optimization variables
-        cleanupInterval: null,
-        fetchTimeouts: {}
-    },
-    
+    // Internal reference to the proxied store state.
+    // ACCESS POLICY: Only CoreAppLifecycle (within this module) should use app.state.X.
+    // All external modules must read/write state via:
+    //   - appStateUtils helpers           (preferred — setAppState, batchAppState, etc.)
+    //   - window.ragotModules.appStore.actions.*  (direct store action dispatch)
+    //   - window.ragotModules.appState    (read-only proxy access)
+    // Do NOT add new external usages of `app.state`.
+    state: appState,
+
     // Media element cache
     mediaCache: new Map(), // Size-limited cache for loaded media
-    
+
     // State reset function
-    resetState: function() {
+    resetState: function () {
         console.log("Resetting app state");
-        // Reset all state variables
-        this.state.currentCategoryId = null;
-        this.state.currentPage = 1;
-        this.state.hasMoreMedia = true;
-        this.state.isLoading = false;
-        this.state.fullMediaList = [];
-        this.state.preloadQueue = [];
-        this.state.isPreloading = false;
-        this.state.currentMediaIndex = 0;
-        this.state.navigationDisabled = false;
-        
+
+        // Reset core state in one transactional batch.
+        appStore.batch((state) => {
+            state.currentCategoryId = null;
+            state.currentPage = 1;
+            state.hasMoreMedia = true;
+            state.asyncIndexingActive = false;
+            state.isLoading = false;
+            state.fullMediaList = [];
+            state.mediaUrlSet.clear();
+            state.preloadQueue = [];
+            state.isPreloading = false;
+            state.currentMediaIndex = 0;
+            state.navigationDisabled = false;
+        }, { source: 'app.resetState' });
+
         // Clear media cache
         this.mediaCache.clear();
-        
+
         // Abort any ongoing fetch requests
         if (this.state.currentFetchController) {
             console.log("Aborting fetch requests during reset");
             this.state.currentFetchController.abort();
             this.state.currentFetchController = null;
         }
-        
+
         // Perform aggressive cleanup
-        if (typeof window.appModules !== 'undefined' && window.appModules.mediaLoader) {
-            window.appModules.mediaLoader.clearResources(true);
+        if (typeof window.ragotModules !== 'undefined' && window.ragotModules.mediaLoader) {
+            window.ragotModules.mediaLoader.clearResources(true);
         }
-        
+
         console.log("App state reset complete");
     }
 };
 
-// Global app reference
-window.appInstance = app;
+let coreAppLifecycle = null;
 
-    // Mobile-specific memory management
-if (MOBILE_DEVICE) {
-    console.log('Mobile device detected: Setting up aggressive memory management');
-    
-    // Periodic memory cleanup using configured interval
-    app.state.cleanupInterval = setInterval(() => {
-        console.log('Mobile device: performing periodic cleanup');
-        
-        // Clear any media that's not currently visible
-        if (app.state.currentMediaIndex !== null && app.state.fullMediaList.length > 0) {
-            const currentMedia = app.state.fullMediaList[app.state.currentMediaIndex];
-            
-            // Only keep the current media in cache, clear everything else
-            app.mediaCache.clear();
-            if (currentMedia && currentMedia.url) {
-                // Re-add just the current item if it exists
-                const cachedItem = document.querySelector(`[data-media-url="${currentMedia.url}"]`);
-                if (cachedItem) {
-                    app.mediaCache.set(currentMedia.url, cachedItem.cloneNode(true));
+class CoreAppLifecycle extends Module {
+    onStart() {
+        if (!MOBILE_DEVICE) return;
+
+        console.log('Mobile device detected: Setting up aggressive memory management');
+
+        // Periodic memory cleanup using configured interval
+        app.state.cleanupInterval = this.interval(() => {
+            console.log('Mobile device: performing periodic cleanup');
+
+            // Clear any media that's not currently visible
+            if (app.state.currentMediaIndex !== null && app.state.fullMediaList.length > 0) {
+                const currentMedia = app.state.fullMediaList[app.state.currentMediaIndex];
+
+                // Only keep the current media in cache, clear everything else
+                app.mediaCache.clear();
+                if (currentMedia && currentMedia.url) {
+                    // Re-add just the current item if it exists
+                    const cachedItem = $(`[data-media-url="${currentMedia.url}"]`);
+                    if (cachedItem) {
+                        app.mediaCache.set(currentMedia.url, cachedItem.cloneNode(true));
+                    }
                 }
             }
-        }
-        
-        // Force garbage collection hint
-        app.state.lastCleanupTime = Date.now();
-        
-        // Clear any stale fetch timeouts
-        const now = Date.now();
-        Object.keys(app.state.fetchTimeouts).forEach(key => {
-            if (now - app.state.fetchTimeouts[key] > MOBILE_FETCH_TIMEOUT) {
-                delete app.state.fetchTimeouts[key];
+
+            // Force garbage collection hint
+            app.state.lastCleanupTime = Date.now();
+
+            // Clear any stale fetch timeouts
+            const now = Date.now();
+            Object.keys(app.state.fetchTimeouts).forEach(key => {
+                if (now - app.state.fetchTimeouts[key] > MOBILE_FETCH_TIMEOUT) {
+                    delete app.state.fetchTimeouts[key];
+                }
+            });
+
+            // Call the cacheManager's cleanup if available
+            if (window.ragotModules && window.ragotModules.cacheManager) {
+                window.ragotModules.cacheManager.performCacheCleanup(true);
+            }
+        }, MOBILE_CLEANUP_INTERVAL);
+
+        // Cleanup on page unload
+        this.on(window, 'beforeunload', () => {
+            if (app.state.cleanupInterval) {
+                this.clearInterval(app.state.cleanupInterval);
+                app.state.cleanupInterval = null;
             }
         });
-        
-        // Call the cacheManager's cleanup if available
-        if (window.appModules && window.appModules.cacheManager) {
-            window.appModules.cacheManager.performCacheCleanup(true);
-        }
-        
-        // Ensure fullscreen buttons are present on active videos
-        // This helps recover from situations where buttons were removed during cleanup
-        if (window.appModules && window.appModules.fullscreenManager) {
-            window.appModules.fullscreenManager.ensureFullscreenButtons();
-        }
-    }, MOBILE_CLEANUP_INTERVAL);
-    
-    // Ensure fullscreen controls remain available using configured interval
-    const fullscreenCheckInterval = getConfigValue('javascript_config.core_app.fullscreen_check_interval', 2000);
-    app.state.fullscreenCheckInterval = setInterval(() => {
-        if (window.appModules && window.appModules.fullscreenManager) {
-            window.appModules.fullscreenManager.ensureFullscreenButtons();
-        }
-    }, fullscreenCheckInterval);
-    
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', () => {
+    }
+
+    onStop() {
         if (app.state.cleanupInterval) {
-            clearInterval(app.state.cleanupInterval);
+            this.clearInterval(app.state.cleanupInterval);
+            app.state.cleanupInterval = null;
         }
-        if (app.state.fullscreenCheckInterval) {
-            clearInterval(app.state.fullscreenCheckInterval);
-        }
-    });
+    }
 }
+
+function ensureCoreAppLifecycle() {
+    if (!coreAppLifecycle) {
+        coreAppLifecycle = new CoreAppLifecycle();
+    }
+    coreAppLifecycle.start();
+}
+
+function cleanupCoreAppLifecycle() {
+    if (coreAppLifecycle) {
+        coreAppLifecycle.stop();
+        coreAppLifecycle = null;
+    }
+}
+
+ensureCoreAppLifecycle();
 
 // Module exports
 export {
-    categoryView,
-    mediaView,
-    categoryList,
-    tiktokContainer,
+    gridContainer,
+    mediaViewer,
     spinnerContainer,
     syncToggleBtn,
     MOBILE_DEVICE,
+    LOW_MEMORY_DEVICE,
     getMediaPerPage,
     LOAD_MORE_THRESHOLD,
     renderWindowSize,
     MAX_CACHE_SIZE,
     MOBILE_FETCH_TIMEOUT,
     MOBILE_CLEANUP_INTERVAL,
-    app
+    appStore,
+    appState,
+    app,
+    cleanupCoreAppLifecycle
 };

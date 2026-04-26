@@ -1,166 +1,84 @@
 """
 File Utilities
 -------------
-Utilities for managing category configuration files.
+Utilities for managing category configuration and directory checks.
+Now uses SQLite for category storage via the media domain persistence service.
 """
 # app/utils/file_utils.py
 import os
-import json
-import time
 import logging
 import traceback
-from flask import current_app
+
+from app.services.core.runtime_config_service import (
+    get_runtime_config_value,
+    get_runtime_instance_path,
+)
 
 logger = logging.getLogger(__name__)
 
-INDEX_FILENAME = "ghosthub.json"
 GHOSTHUB_DIR_NAME = ".ghosthub"
 
+
 def get_categories_filepath():
-    """Get absolute path to the categories JSON file."""
-    # Use instance_path which is correctly set by the app factory
-    return os.path.join(current_app.instance_path, os.path.basename(current_app.config['CATEGORIES_FILE']))
+    """
+    Get absolute path to the categories JSON file.
+    DEPRECATED: Categories are now stored in SQLite. This is kept for migration purposes.
+    """
+    return os.path.join(
+        get_runtime_instance_path(),
+        os.path.basename(get_runtime_config_value('CATEGORIES_FILE')),
+    )
+
 
 def init_categories_file():
-    """Create empty categories file if it doesn't exist."""
-    filepath = get_categories_filepath()
-    if not os.path.exists(filepath):
-        try:
-            # Ensure the directory exists (instance folder should already be created by app factory)
-            os.makedirs(os.path.dirname(filepath), exist_ok=True)
-            with open(filepath, 'w') as f:
-                json.dump([], f)
-            logger.info(f"Created empty categories file: {filepath}")
-        except Exception as e:
-            logger.error(f"Failed to create categories file at {filepath}: {str(e)}")
-            # Depending on the desired behavior, you might want to raise the exception
-            # raise # Uncomment to propagate the error
+    """
+    Create empty categories file if it doesn't exist.
+    DEPRECATED: Categories are now stored in SQLite. This is a no-op.
+    """
+    # No-op: SQLite database is initialized during app startup.
+    pass
+
 
 def load_categories():
     """
-    Load categories from JSON file with error handling.
+    Load manually added categories from storage.
+    Now uses SQLite via category_persistence_service for reduced SD card I/O.
     
     Returns list of categories or empty list on error.
     """
-    filepath = get_categories_filepath()
     try:
-        with open(filepath, 'r') as f:
-            categories = json.load(f)
-            logger.info(f"Successfully loaded {len(categories)} categories from {filepath}")
-            return categories
-    except FileNotFoundError:
-        logger.warning(f"Categories file not found: {filepath}. Initializing.")
-        init_categories_file()
-        return []
-    except json.JSONDecodeError:
-        logger.error(f"Invalid JSON in categories file: {filepath}. Backing up and re-initializing.")
-        backup_corrupted_file(filepath)
-        init_categories_file()
-        return []
+        from app.services.media import category_persistence_service
+
+        categories = category_persistence_service.load_categories()
+        logger.info(f"Successfully loaded {len(categories)} categories from SQLite")
+        return categories
     except Exception as e:
-        logger.error(f"Error loading categories from {filepath}: {str(e)}")
+        logger.error(f"Error loading categories from SQLite: {str(e)}")
         logger.debug(traceback.format_exc())
-        return [] # Return empty list on other errors
+        return []
+
 
 def save_categories(categories):
     """
-    Save categories to JSON file.
+    Save categories to storage.
+    Now uses SQLite via category_persistence_service for reduced SD card I/O.
     
     Returns True if successful, False otherwise.
     """
-    filepath = get_categories_filepath()
     try:
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, 'w') as f:
-            json.dump(categories, f, indent=2)
-        logger.info(f"Successfully saved {len(categories)} categories to {filepath}")
-        return True
+        from app.services.media import category_persistence_service
+
+        success = category_persistence_service.save_categories_bulk(categories)
+        if success:
+            logger.info(f"Successfully saved {len(categories)} categories to SQLite")
+        return success
     except Exception as e:
-        logger.error(f"Error saving categories to {filepath}: {str(e)}")
+        logger.error(f"Error saving categories to SQLite: {str(e)}")
         logger.debug(traceback.format_exc())
         return False
 
-def backup_corrupted_file(filepath):
-    """Create timestamped backup of corrupted file."""
-    if os.path.exists(filepath):
-        backup_file = f"{filepath}.bak.{int(time.time())}"
-        try:
-            os.rename(filepath, backup_file)
-            logger.info(f"Backed up corrupted file to {backup_file}")
-        except Exception as e:
-            logger.error(f"Failed to backup corrupted file {filepath}: {str(e)}")
 
-def get_index_filepath(category_path):
-    """Get the absolute path to the index file for a given category path."""
-    ghosthub_dir = os.path.join(category_path, GHOSTHUB_DIR_NAME)
-    os.makedirs(ghosthub_dir, exist_ok=True)
-    return os.path.join(ghosthub_dir, INDEX_FILENAME)
-
-def load_index(category_path):
-    """
-    Load the media index from the JSON file for a category.
-
-    Returns:
-        dict: The loaded index data (including timestamp and files) or None on error.
-    """
-    filepath = get_index_filepath(category_path)
-    try:
-        if not os.path.exists(filepath):
-            logger.info(f"Index file not found: {filepath}")
-            return None
-        with open(filepath, 'r') as f:
-            index_data = json.load(f)
-            file_count = len(index_data.get('files', []))
-            logger.info(f"Successfully loaded index from {filepath} with {file_count} files")
-            return index_data
-    except json.JSONDecodeError:
-        logger.error(f"Invalid JSON in index file: {filepath}. Backing up and treating as missing.")
-        backup_corrupted_file(filepath)
-        return None
-    except Exception as e:
-        logger.error(f"Error loading index from {filepath}: {str(e)}")
-        logger.debug(traceback.format_exc())
-        return None
-
-def save_index(category_path, index_data):
-    """
-    Save the media index to the JSON file for a category.
-
-    Args:
-        category_path (str): The path to the category directory.
-        index_data (dict): The index data to save (should include timestamp and files list).
-
-    Returns:
-        bool: True if successful, False otherwise.
-    """
-    # Use a direct path to the index file in the category directory
-    filepath = get_index_filepath(category_path)
-    
-    try:
-        file_count = len(index_data.get('files', []))
-        
-        # Log more details about the file we're trying to save
-        logger.info(f"Attempting to save index directly to {filepath} with {file_count} files")
-        
-        # Write the file with explicit encoding - use a simpler approach
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(index_data, f)
-        
-        # Verify the file was created
-        if os.path.exists(filepath):
-            file_size = os.path.getsize(filepath)
-            logger.info(f"Successfully saved index to {filepath} with {file_count} files (size: {file_size} bytes)")
-            return True
-        else:
-            logger.error(f"File was not created: {filepath}")
-            return False
-    except Exception as e:
-        logger.error(f"Error saving index to {filepath}: {str(e)}")
-        logger.debug(traceback.format_exc())
-        return False
-
-def is_large_directory(category_path, threshold=50):
+def is_large_directory(category_path, threshold=50, known_file_count=None):
     """
     Check if a directory contains more than the threshold number of media files.
     This is a quick check to determine if async indexing should be used.
@@ -168,29 +86,34 @@ def is_large_directory(category_path, threshold=50):
     Args:
         category_path (str): The path to the category directory.
         threshold (int): The number of files threshold.
-        
+        known_file_count (int, optional): Known file count from previous scan.
     Returns:
         bool: True if the directory contains more than threshold media files, False otherwise.
     """
+    if threshold <= 0:
+        return True
+
+    if known_file_count is not None:
+        return known_file_count > threshold
+
     try:
-        # First check if a valid index file exists
-        index_data = load_index(category_path)
-        if index_data and 'files' in index_data:
-            file_count = len(index_data['files'])
-            logger.debug(f"Using index file to determine directory size: {file_count} files in {category_path}")
-            return file_count > threshold
-        
         # If no valid index, count files directly
         # Import here to avoid circular import
         from app.utils.media_utils import is_media_file
         
         try:
-            # First try a simple directory listing
-            files = os.listdir(category_path)
-            media_files = [f for f in files if is_media_file(f)]
-            file_count = len(media_files)
-            logger.debug(f"Found {file_count} media files in {category_path}")
-            return file_count > threshold
+            # Use os.scandir() for constant memory usage and early exit
+            count = 0
+            with os.scandir(category_path) as it:
+                for entry in it:
+                    if entry.is_file() and is_media_file(entry.name):
+                        count += 1
+                        if count > threshold:
+                            logger.debug(f"Directory {category_path} exceeded threshold of {threshold}")
+                            return True
+
+            logger.debug(f"Found {count} media files in {category_path}")
+            return False
         except Exception as list_error:
             logger.error(f"Error listing directory {category_path}: {list_error}")
             return False

@@ -1,0 +1,610 @@
+/* ===== TV PLAYER MODAL (iOS-Themed) =====
+ * Compact playback control modal that appears when casting to TV
+ * Inspired by iOS Now Playing and Control Center design
+ */
+
+.tv-player-modal {
+    position: fixed;
+    top: 70px; /* Below header (header is ~60px tall) */
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    width: 360px;
+    max-width: calc(100vw - 40px);
+
+    /* iOS glassmorphic background */
+    background: rgba(var(--surface-color-rgb), 0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.3),
+        0 2px 8px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+    padding: 16px;
+    z-index: 900; /* Below header (1000) but above content */
+
+    /* Prevent text selection and touch callouts on mobile */
+    -webkit-touch-callout: none;
+    touch-action: none; /* Disable browser touch gestures */
+
+    /* Animation states */
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        transform 280ms var(--gh-motion-emphasis),
+        opacity 220ms ease;
+}
+
+.tv-player-modal.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Minimized state - compact pill at bottom-right */
+.tv-player-modal.minimized {
+    opacity: 0;
+    pointer-events: none;
+    position: fixed;
+    top: auto;
+    bottom: 20px;
+    left: auto;
+    right: 20px;
+    width: 240px;
+    max-width: calc(100vw - 40px);
+    padding: 10px 12px;
+    height: auto;
+    max-height: 60px;
+    transform: translateX(0) translateY(20px);
+    cursor: pointer;
+
+    /* Faster transition for minimize action */
+    transition:
+        transform 220ms var(--gh-motion-emphasis),
+        opacity 180ms ease,
+        bottom 220ms ease,
+        right 220ms ease;
+}
+
+/* Show minimized modal (separate class for state management) */
+.tv-player-modal.minimized.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0) translateY(0);
+    user-select: none;
+    -webkit-user-select: none;
+
+    /* Visual hint: gentle single nudge so the minimized state reads as interactive */
+    animation: minimized-hint 2.4s ease-in-out 0.6s 1;
+}
+
+@keyframes minimized-hint {
+    0%, 100% {
+        transform: translateX(0) translateY(0);
+        box-shadow:
+            0 10px 40px rgba(0, 0, 0, 0.3),
+            0 2px 8px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    50% {
+        transform: translateX(0) translateY(-1px);
+        box-shadow:
+            0 12px 44px rgba(0, 0, 0, 0.34),
+            0 4px 12px rgba(0, 0, 0, 0.25),
+            inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+}
+
+.tv-player-modal.minimized.show:hover {
+    transform: translateX(0) translateY(-4px);
+    box-shadow:
+        0 12px 48px rgba(0, 0, 0, 0.4),
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.tv-player-modal.minimized.show:active {
+    transform: translateX(0) translateY(-2px);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Hide controls when minimized */
+.tv-player-modal.minimized .tv-player-controls {
+    display: none;
+}
+
+/* Compact header layout when minimized */
+.tv-player-modal.minimized .tv-player-header {
+    margin-bottom: 0;
+    gap: 10px;
+}
+
+.tv-player-modal.minimized .tv-player-thumbnail {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+}
+
+.tv-player-modal.minimized .tv-player-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.tv-player-modal.minimized .tv-player-subtitle {
+    font-size: 0.72rem;
+}
+
+/* Hide close button on minimized modal */
+.tv-player-modal.minimized .tv-player-btn-close {
+    display: none;
+}
+
+/* Modal header with thumbnail and title */
+.tv-player-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.tv-player-thumbnail {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: var(--background-color-dark);
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.tv-player-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tv-player-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.tv-player-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tv-player-live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+.tv-player-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    animation: tv-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tv-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Playback controls section */
+.tv-player-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Time scrubber */
+.tv-player-scrubber {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tv-player-progress-bar {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    cursor: pointer;
+    overflow: visible;
+}
+
+.tv-player-progress-bar.indeterminate .tv-player-progress-fill {
+    width: 35%;
+    background: linear-gradient(90deg,
+        rgba(var(--accent-color-rgb), 0.2),
+        rgba(var(--accent-color-rgb), 0.7),
+        rgba(var(--accent-color-rgb), 0.2)
+    );
+    animation: tv-loading-bar 1.2s ease-in-out infinite;
+}
+
+.tv-player-progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+/* Loading shimmer for unknown duration */
+.tv-player-modal.loading .tv-player-progress-fill {
+    width: 35%;
+    background: linear-gradient(90deg,
+        rgba(var(--accent-color-rgb), 0.2),
+        rgba(var(--accent-color-rgb), 0.6),
+        rgba(var(--accent-color-rgb), 0.2)
+    );
+    animation: tv-loading-bar 1.4s ease-in-out infinite;
+}
+
+@keyframes tv-loading-bar {
+    0% { transform: translateX(-20%); }
+    50% { transform: translateX(40%); }
+    100% { transform: translateX(-20%); }
+}
+
+.tv-player-progress-handle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    width: 14px;
+    height: 14px;
+    background: var(--text-primary);
+    border-radius: 50%;
+    box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.3),
+        0 0 0 2px var(--accent-color);
+    transition: transform 0.2s ease;
+    pointer-events: none;
+}
+
+.tv-player-time-display {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Button controls */
+.tv-player-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 8px 0 4px 0;
+}
+
+.tv-player-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        background-color 0.2s ease,
+        transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tv-player-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.tv-player-btn:focus-visible,
+.tv-player-progress-bar:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 2px rgba(var(--accent-color-rgb), 0.26),
+        0 0 0 4px rgba(var(--accent-color-rgb), 0.14);
+}
+
+.tv-player-btn:active {
+    transform: scale(0.92);
+}
+
+.tv-player-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Large play/pause button (iOS style) */
+.tv-player-btn-play-pause {
+    width: 52px;
+    height: 52px;
+    background: var(--accent-color);
+    box-shadow:
+        0 4px 12px rgba(var(--accent-color-rgb), 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.tv-player-btn-play-pause:hover {
+    background: var(--accent-color-light);
+    transform: scale(1.05);
+}
+
+.tv-player-btn-play-pause:active {
+    transform: scale(0.95);
+}
+
+.tv-player-btn-play-pause svg {
+    width: 28px;
+    height: 28px;
+    color: white;
+}
+
+.tv-player-loading-spinner {
+    display: none;
+}
+
+.tv-player-modal.loading .tv-player-btn-play-pause svg {
+    display: none;
+}
+
+.tv-player-modal.loading .tv-player-btn-play-pause .tv-player-loading-spinner {
+    display: block;
+}
+
+/* Close button */
+.tv-player-btn-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+}
+
+.tv-player-btn-close svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Sync Progress button (guest only) */
+.tv-player-btn-sync-progress {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    transition:
+        background-color 0.2s ease,
+        transform 0.15s ease,
+        box-shadow 0.3s ease;
+}
+
+.tv-player-btn-sync-progress:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.tv-player-btn-sync-progress svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Success state - green pulse */
+.tv-player-btn-sync-progress.sync-success {
+    background: rgba(76, 175, 80, 0.3);
+    box-shadow:
+        0 0 12px rgba(76, 175, 80, 0.6),
+        0 4px 12px rgba(76, 175, 80, 0.3);
+    animation: sync-pulse 0.5s ease-out;
+}
+
+.tv-player-btn-sync-progress.sync-success svg {
+    color: #4CAF50;
+}
+
+/* Error state - red pulse */
+.tv-player-btn-sync-progress.sync-error {
+    background: rgba(244, 67, 54, 0.3);
+    box-shadow:
+        0 0 12px rgba(244, 67, 54, 0.6),
+        0 4px 12px rgba(244, 67, 54, 0.3);
+    animation: sync-pulse 0.5s ease-out;
+}
+
+.tv-player-btn-sync-progress.sync-error svg {
+    color: #F44336;
+}
+
+@keyframes sync-pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Loading state */
+.tv-player-modal.loading .tv-player-btn-play-pause {
+    pointer-events: none;
+}
+
+.tv-player-loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: tv-spinner-spin 0.8s linear infinite;
+}
+
+@keyframes tv-spinner-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Allow touch actions only on interactive controls */
+.tv-player-btn,
+.tv-player-progress-bar {
+    touch-action: manipulation; /* Allow tap without delay */
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .tv-player-modal {
+        top: 60px; /* Further down on mobile to avoid header */
+        width: calc(100vw - 20px);
+        max-width: none;
+    }
+
+    .tv-player-thumbnail {
+        width: 48px;
+        height: 48px;
+    }
+
+    .tv-player-title {
+        font-size: 0.9rem;
+    }
+
+    .tv-player-btn-play-pause {
+        width: 48px;
+        height: 48px;
+    }
+
+    .tv-player-btn-play-pause svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Minimized state on mobile - compact corner pill */
+    .tv-player-modal.minimized {
+        bottom: 70px; /* Higher to avoid mobile navigation */
+        right: 10px;
+        left: auto; /* FIXED: Don't stretch across screen */
+        width: 220px; /* FIXED: Explicit width, no auto expansion */
+        max-width: calc(100vw - 20px); /* Responsive fallback */
+        padding: 10px 12px;
+    }
+
+    .tv-player-modal.minimized .tv-player-header {
+        gap: 10px;
+    }
+
+    .tv-player-modal.minimized .tv-player-thumbnail {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+    }
+
+    .tv-player-modal.minimized .tv-player-title {
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .tv-player-modal.minimized .tv-player-subtitle {
+        font-size: 0.72rem;
+    }
+
+    .tv-player-modal.minimized .tv-player-btn-close {
+        display: none;
+    }
+}
+
+/* Adjust modal when header is visible */
+.gh-header ~ * .tv-player-modal,
+body:has(.gh-header) .tv-player-modal {
+    top: 80px; /* Dynamic spacing based on header height */
+}
+
+/* Compact mode when scrolling (optional enhancement) */
+.tv-player-modal.compact {
+    padding: 12px;
+    top: 10px;
+    width: 320px;
+}
+
+.tv-player-modal.compact .tv-player-thumbnail {
+    width: 44px;
+    height: 44px;
+}
+
+/* Dark mode enhancements */
+[data-theme="midnight"] .tv-player-modal {
+    border-color: rgba(233, 69, 96, 0.3);
+}
+
+[data-theme="nord"] .tv-player-modal {
+    border-color: rgba(136, 192, 208, 0.3);
+}
+
+[data-theme="monokai"] .tv-player-modal {
+    border-color: rgba(249, 38, 114, 0.3);
+}
+
+[data-theme="dracula"] .tv-player-modal {
+    border-color: rgba(189, 147, 249, 0.3);
+}
+
+/* Smooth transitions for state changes */
+.tv-player-modal * {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.tv-player-progress-bar.scrubbing .tv-player-progress-fill {
+    transition: none;
+}
+
+/* ===== CAST BUTTON PENDING STATE ===== */
+#gh-header-cast-button.casting-pending {
+    position: relative;
+    animation: cast-pulse 1.2s ease-in-out infinite;
+}
+
+#gh-header-cast-button.casting-pending::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1px solid rgba(var(--accent-color-rgb), 0.4);
+    opacity: 0;
+    animation: cast-ring 1.2s ease-out infinite;
+}
+
+@keyframes cast-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes cast-ring {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    70% { transform: scale(1.2); opacity: 0; }
+    100% { transform: scale(1.2); opacity: 0; }
+}

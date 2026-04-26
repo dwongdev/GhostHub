@@ -1,0 +1,67 @@
+/* Cards */
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+}
+
+.card--config,
+.config-card {
+    margin-bottom: var(--space-md);
+}
+
+.card__header,
+.config-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--card-header-padding);
+    cursor: pointer;
+    user-select: none;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--divider-color);
+    transition: background var(--transition-fast) ease;
+}
+
+.card__header:hover,
+.config-card-header:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.card__header::after,
+.config-card-header::after {
+    content: '▼';
+    margin-left: auto;
+    font-size: 0.8em;
+    transition: transform var(--transition-fast) ease-out;
+}
+
+.card__header.collapsed::after,
+.card--open .card__header::after {
+    transform: rotate(0deg);
+}
+
+.card__body,
+.config-card-body {
+    padding: var(--card-padding);
+    overflow: hidden;
+    max-height: none;
+    opacity: 1;
+    transition:
+        max-height var(--transition-medium) ease-in-out,
+        padding-top var(--transition-medium) ease-in-out,
+        padding-bottom var(--transition-medium) ease-in-out,
+        opacity var(--transition-medium) ease-in-out;
+}
+
+.card__body.collapsed,
+.config-card-body.collapsed {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+}

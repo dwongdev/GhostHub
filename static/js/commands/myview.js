@@ -3,33 +3,39 @@
  * Handles the /myview command which shares the user's current view with others in chat
  */
 
-import { app } from '../core/app.js';
 import { ensureFeatureAccess } from '../utils/authManager.js'; // Import the new auth utility
+import { SOCKET_EVENTS } from '../core/socketEvents.js';
 
 // Define the functions first
 async function executeMyView(socket, displayLocalMessage, arg) {
-  const accessGranted = await ensureFeatureAccess();
-  if (!accessGranted) {
-    displayLocalMessage('Password validation required to use /myview. Please try again after validating.');
-    console.log('Access to /myview command denied by password protection.');
+  const appState = window.ragotModules?.appState;
+  if (!appState) {
+    displayLocalMessage('App not ready.', { icon: 'x', surface: 'chat' });
     return;
   }
 
-  const categoryId = app.state.currentCategoryId;
-  const index = app.state.currentMediaIndex;
+  const accessGranted = await ensureFeatureAccess();
+  if (!accessGranted) {
+    displayLocalMessage('Password required.', { icon: 'stop', surface: 'chat' });
+    return;
+  }
+
+  const categoryId = appState.currentCategoryId;
+  const index = appState.currentMediaIndex;
   const sessionId = socket.id;
 
   if (!categoryId || index == null) {
-    displayLocalMessage('Cannot share view: No media open');
+    displayLocalMessage('No media open.', { icon: 'x', surface: 'chat' });
     return;
   }
 
   // Emit to server for rebroadcast
-  socket.emit('command', {
+  socket.emit(SOCKET_EVENTS.COMMAND, {
     cmd: 'myview',
     arg: { category_id: categoryId, index },
     from: sessionId
   });
+  displayLocalMessage('View shared.', { icon: 'cast', surface: 'chat' });
 }
 
 function getMyViewHelpText() {
@@ -38,7 +44,8 @@ function getMyViewHelpText() {
 
 // Export the command object
 export const myview = {
-    description: "Share your current media view with others in the chat.",
-    execute: executeMyView,
-    getHelpText: getMyViewHelpText
+  description: "Share your current media view with others in the chat.",
+  keepChatOpen: true,
+  execute: executeMyView,
+  getHelpText: getMyViewHelpText
 };

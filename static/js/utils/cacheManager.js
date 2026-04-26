@@ -2,8 +2,25 @@
  * Cache Manager Utility
  * Handles media caching, size management, and resource cleanup
  */
+import { $$ } from '../libs/ragot.esm.min.js';
 
-import { MAX_CACHE_SIZE, MOBILE_DEVICE, MOBILE_CLEANUP_INTERVAL, app } from '../core/app.js';
+function requireAppRuntime() {
+    const runtime = window.ragotModules?.appRuntime;
+    if (!runtime) throw new Error('[cacheManager] appRuntime service is not registered');
+    return runtime;
+}
+
+function requireAppState() {
+    const appState = window.ragotModules?.appState;
+    if (!appState) throw new Error('[cacheManager] appState service is not registered');
+    return appState;
+}
+
+function requireAppCache() {
+    const appCache = window.ragotModules?.appCache;
+    if (!appCache) throw new Error('[cacheManager] appCache service is not registered');
+    return appCache;
+}
 
 /**
  * Add an item to the media cache with size management
@@ -12,12 +29,14 @@ import { MAX_CACHE_SIZE, MOBILE_DEVICE, MOBILE_CLEANUP_INTERVAL, app } from '../
  */
 function addToCache(key, element) {
     if (!key || !element) return;
+    const appCache = requireAppCache();
+    const { MAX_CACHE_SIZE } = requireAppRuntime();
     
     // Add to cache
-    app.mediaCache.set(key, element.cloneNode(true));
+    appCache.set(key, element);
     
     // Check if we need to prune the cache
-    if (app.mediaCache.size > MAX_CACHE_SIZE) {
+    if (appCache.size > MAX_CACHE_SIZE) {
         pruneCache();
     }
 }
@@ -28,10 +47,10 @@ function addToCache(key, element) {
  * @returns {HTMLElement|null} - The cached element or null if not found
  */
 function getFromCache(key) {
-    if (!key || !app.mediaCache.has(key)) return null;
+    const appCache = requireAppCache();
+    if (!key || !appCache.has(key)) return null;
     
-    const element = app.mediaCache.get(key);
-    return element ? element.cloneNode(true) : null;
+    return appCache.get(key) || null;
 }
 
 /**
@@ -40,25 +59,24 @@ function getFromCache(key) {
  * @returns {boolean} - Whether the item exists in cache
  */
 function hasInCache(key) {
-    return key && app.mediaCache.has(key);
+    return key && requireAppCache().has(key);
 }
 
 /**
  * Prune the cache when it exceeds the maximum size
  */
 function pruneCache() {
-    console.log(`Cache size (${app.mediaCache.size}) exceeds limit, pruning...`);
-    const keysToDelete = Array.from(app.mediaCache.keys()).slice(0, app.mediaCache.size - MAX_CACHE_SIZE);
-    keysToDelete.forEach(key => app.mediaCache.delete(key));
-    console.log(`Pruned cache to ${app.mediaCache.size} items`);
+    const appCache = requireAppCache();
+    const { MAX_CACHE_SIZE } = requireAppRuntime();
+    const keysToDelete = Array.from(appCache.keys()).slice(0, appCache.size - MAX_CACHE_SIZE);
+    keysToDelete.forEach(key => appCache.delete(key));
 }
 
 /**
  * Clear the entire cache
  */
 function clearCache() {
-    app.mediaCache.clear();
-    console.log("Media cache completely cleared");
+    requireAppCache().clear();
 }
 
 /**
@@ -67,21 +85,22 @@ function clearCache() {
  */
 function performCacheCleanup(aggressive = false) {
     const now = Date.now();
+    const appState = requireAppState();
+    const { MOBILE_DEVICE, MOBILE_CLEANUP_INTERVAL } = requireAppRuntime();
     
     // Use the MEMORY_CLEANUP_INTERVAL from server config if available
     const cleanupInterval = (window.serverConfig && window.serverConfig.MEMORY_CLEANUP_INTERVAL) || 60000;
     
-    // Use the mobile cleanup interval from app.js if on mobile
+    // Use the mobile cleanup interval from appRuntime when on mobile
     const effectiveInterval = MOBILE_DEVICE ? MOBILE_CLEANUP_INTERVAL : cleanupInterval;
     
-    if (aggressive || now - app.state.lastCleanupTime > effectiveInterval) {
-        console.log(`Performing ${aggressive ? 'aggressive' : 'periodic'} cache cleanup`);
+    if (aggressive || now - appState.lastCleanupTime > effectiveInterval) {
         clearCache();
         
         // Clear any media elements that might be detached but still referenced
         if (aggressive) {
             // Try to clear any detached media elements
-            const mediaElements = document.querySelectorAll('video, audio, img');
+            const mediaElements = $$('video, audio, img');
             mediaElements.forEach(element => {
                 if (!document.body.contains(element) && element.parentNode) {
                     try {
@@ -98,7 +117,7 @@ function performCacheCleanup(aggressive = false) {
                         if (element.tagName === 'VIDEO' || element.tagName === 'AUDIO') {
                             element.pause();
                             element.removeAttribute('src');
-                            element.load();
+                            element.srcObject = null;
                         }
                     } catch (e){
                         // ignore
@@ -107,25 +126,26 @@ function performCacheCleanup(aggressive = false) {
             });
         }
         
-        // Force a small garbage collection by creating and releasing objects
-        // This is more cross-browser compatible than window.gc()
+        // Request idle callback for garbage collection hint
+        // Avoid creating objects which increases memory pressure on Pi 4
         try {
-            const garbageArray = [];
-            // Create fewer objects on mobile to avoid excessive memory pressure
-            const objectCount = MOBILE_DEVICE ? 1000 : 10000;
-            const bufferSize = MOBILE_DEVICE ? 512 : 1024;
-            
-            // Create a bunch of objects to force memory pressure
-            for (let i = 0; i < objectCount; i++) {
-                garbageArray.push(new ArrayBuffer(bufferSize));
+            if ('requestIdleCallback' in window) {
+                // Use idle callback to hint GC during browser idle time
+                window.requestIdleCallback(() => {
+                    // Clear any object URLs that might be lingering
+                    const blobUrls = $$('[src^="blob:"]');
+                    blobUrls.forEach(el => {
+                        if (!document.body.contains(el)) {
+                            try { URL.revokeObjectURL(el.src); } catch(e) {}
+                        }
+                    });
+                }, { timeout: 1000 });
             }
-            // Clear the array to release the objects
-            garbageArray.length = 0;
         } catch (e) {
             console.log('Memory cleanup operation completed');
         }
         
-        app.state.lastCleanupTime = now;
+        appState.lastCleanupTime = now;
     }
 }
 
@@ -137,3 +157,4 @@ export {
     clearCache,
     performCacheCleanup
 };
+

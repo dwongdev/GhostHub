@@ -5,27 +5,37 @@ Provides caching mechanisms for media files to improve performance.
 """
 # app/utils/cache_utils.py
 
+import os
 import time
 import logging
 
 logger = logging.getLogger(__name__)
 
 # Small file threshold - files smaller than this will be served from memory
-SMALL_FILE_THRESHOLD = 8 * 1024 * 1024  # 8MB
+# Reduced from 8MB to 4MB for Pi 4 memory optimization
+SMALL_FILE_THRESHOLD = 4 * 1024 * 1024  # 4MB
 
 # Cache of recently accessed files to speed up repeated access
 # Structure: {filepath: (last_access_time, file_data, file_size, mime_type, etag)}
 small_file_cache = {}
 
-# Cache of open file descriptors for large files
-# Structure: {filepath: (last_access_time, file_descriptor, file_size, mime_type, etag)}
-fd_cache = {}
+# Cache of file metadata for large files (no open file descriptors)
+# Structure: {filepath: (last_access_time, file_size, mime_type, etag, mtime)}
+# Note: We cache only metadata, not file descriptors, to avoid concurrency issues.
+# The OS kernel page cache + fadvise provides the real I/O performance benefit.
+metadata_cache = {}
 
-# Maximum number of file descriptors to keep open
-MAX_FD_CACHE_SIZE = 30
+# Maximum number of metadata entries to cache
+# Metadata is cheap (just a few integers/strings per entry)
+MAX_METADATA_CACHE_SIZE = 100
+
+# Maximum number of small files to hold in memory.
+# Each entry can be up to SMALL_FILE_THRESHOLD (4MB), so cap tightly for LITE hardware.
+MAX_SMALL_FILE_CACHE_SIZE = 50
 
 # Cache expiry time in seconds
-CACHE_EXPIRY = 600  # 10 minutes
+# Reduced from 10 minutes to 5 minutes for Pi 4 memory optimization
+CACHE_EXPIRY = 300  # 5 minutes
 
 def clean_caches():
     """Remove expired entries from file caches to prevent memory leaks."""
@@ -37,43 +47,41 @@ def clean_caches():
     for k in expired_keys:
         del small_file_cache[k]
     
-    # Clean file descriptor cache
-    expired_fd_keys = [k for k, (access_time, fd, _, _, _) in fd_cache.items() 
-                      if current_time - access_time > CACHE_EXPIRY]
-    for k in expired_fd_keys:
-        try:
-            fd_cache[k][1].close()  # Close the file descriptor
-        except Exception as e:
-            logger.warning(f"Error closing cached file descriptor for {k}: {e}")
-        del fd_cache[k]
+    # Clean metadata cache
+    expired_metadata_keys = [k for k, (access_time, _, _, _, _) in metadata_cache.items() 
+                            if current_time - access_time > CACHE_EXPIRY]
+    for k in expired_metadata_keys:
+        del metadata_cache[k]
     
-    # If FD cache is still too large, close the least recently used ones
-    if len(fd_cache) > MAX_FD_CACHE_SIZE:
+    # If metadata cache is still too large, remove the least recently used ones
+    if len(metadata_cache) > MAX_METADATA_CACHE_SIZE:
         # Sort by access time (oldest first)
-        sorted_items = sorted(fd_cache.items(), key=lambda x: x[1][0])
-        # Close oldest file descriptors until we're under the limit
-        for k, (_, fd, _, _, _) in sorted_items[:len(fd_cache) - MAX_FD_CACHE_SIZE]:
-            try:
-                fd.close()
-            except Exception as e:
-                logger.warning(f"Error closing cached file descriptor for {k}: {e}")
-            del fd_cache[k]
+        sorted_items = sorted(metadata_cache.items(), key=lambda x: x[1][0])
+        # Remove oldest entries until we're under the limit
+        for k, _ in sorted_items[:len(metadata_cache) - MAX_METADATA_CACHE_SIZE]:
+            del metadata_cache[k]
 
 def get_from_small_cache(filepath):
     """
-    Get a file from the small file cache if it exists.
-    
+    Get a file from the small file cache if it exists and has not expired.
+
     Args:
         filepath: Path to the file
-        
+
     Returns:
-        Tuple of (file_data, file_size, mime_type, etag) or None if not in cache
+        Tuple of (file_data, file_size, mime_type, etag) or None if not in cache or expired
     """
     if filepath in small_file_cache:
         access_time, file_data, file_size, mime_type, etag = small_file_cache[filepath]
-        # Update access time
-        small_file_cache[filepath] = (time.time(), file_data, file_size, mime_type, etag)
-        logger.info(f"Serving small file from cache: {filepath}")
+        now = time.time()
+        # Evict expired entries on read to prevent stale data
+        if now - access_time > CACHE_EXPIRY:
+            del small_file_cache[filepath]
+            logger.debug(f"Evicted expired small file cache entry: {filepath}")
+            return None
+        # Update access time (LRU touch)
+        small_file_cache[filepath] = (now, file_data, file_size, mime_type, etag)
+        logger.debug(f"Serving small file from cache: {filepath}")
         return file_data, file_size, mime_type, etag
     return None
 
@@ -88,52 +96,60 @@ def add_to_small_cache(filepath, file_data, file_size, mime_type, etag):
         mime_type: MIME type of the file
         etag: ETag for the file
     """
-    small_file_cache[filepath] = (time.time(), file_data, file_size, mime_type, etag)
-    logger.info(f"Loaded small file into cache: {filepath} ({file_size} bytes)")
+    # Evict oldest entry when at capacity to prevent unbounded memory growth on LITE hardware
+    if len(small_file_cache) >= MAX_SMALL_FILE_CACHE_SIZE:
+        oldest_key = min(small_file_cache, key=lambda k: small_file_cache[k][0])
+        del small_file_cache[oldest_key]
 
-def get_from_fd_cache(filepath):
+    small_file_cache[filepath] = (time.time(), file_data, file_size, mime_type, etag)
+    logger.debug(f"Loaded small file into cache: {filepath} ({file_size} bytes)")
+
+def get_from_metadata_cache(filepath):
     """
-    Get a file descriptor from the FD cache if it exists.
+    Get file metadata from the cache if it exists and is still valid.
     
     Args:
         filepath: Path to the file
         
     Returns:
-        Tuple of (file_descriptor, file_size, mime_type, etag) or None if not in cache
+        Tuple of (file_size, mime_type, etag, mtime) or None if not in cache or invalid
     """
-    if filepath in fd_cache:
-        access_time, file_obj, file_size, mime_type, etag = fd_cache[filepath]
-        # Update access time
-        fd_cache[filepath] = (time.time(), file_obj, file_size, mime_type, etag)
-        # Seek to beginning of file
+    if filepath in metadata_cache:
+        access_time, file_size, mime_type, etag, cached_mtime = metadata_cache[filepath]
+        
+        # Verify the file hasn't changed by checking mtime
         try:
-            file_obj.seek(0)
-            logger.info(f"Using cached file descriptor for: {filepath}")
-            return file_obj, file_size, mime_type, etag
+            current_mtime = os.path.getmtime(filepath)
+            if current_mtime == cached_mtime:
+                # Update access time
+                metadata_cache[filepath] = (time.time(), file_size, mime_type, etag, cached_mtime)
+                logger.debug(f"Using cached metadata for: {filepath}")
+                return file_size, mime_type, etag, cached_mtime
+            else:
+                # File has changed, invalidate cache entry
+                logger.debug(f"Cached metadata stale for {filepath}, mtime changed")
+                del metadata_cache[filepath]
         except Exception as e:
-            logger.warning(f"Error seeking cached file descriptor for {filepath}: {e}")
-            # Close and remove from cache if seeking fails
-            try:
-                file_obj.close()
-            except:
-                pass
-            del fd_cache[filepath]
+            logger.warning(f"Error validating cached metadata for {filepath}: {e}")
+            # Remove invalid cache entry
+            if filepath in metadata_cache:
+                del metadata_cache[filepath]
     return None
 
-def add_to_fd_cache(filepath, file_obj, file_size, mime_type, etag):
+def add_to_metadata_cache(filepath, file_size, mime_type, etag, mtime):
     """
-    Add a file descriptor to the FD cache.
+    Add file metadata to the cache.
     
     Args:
         filepath: Path to the file
-        file_obj: File object
         file_size: Size of the file in bytes
         mime_type: MIME type of the file
         etag: ETag for the file
+        mtime: File modification time
     """
     # If cache is full, clean it first
-    if len(fd_cache) >= MAX_FD_CACHE_SIZE:
+    if len(metadata_cache) >= MAX_METADATA_CACHE_SIZE:
         clean_caches()
     
-    fd_cache[filepath] = (time.time(), file_obj, file_size, mime_type, etag)
-    logger.info(f"Cached file descriptor for: {filepath}")
+    metadata_cache[filepath] = (time.time(), file_size, mime_type, etag, mtime)
+    logger.debug(f"Cached metadata for: {filepath}")

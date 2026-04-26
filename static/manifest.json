@@ -33,5 +33,21 @@
     }
   ],
   "orientation": "portrait",
-  "scope": "/"
+  "scope": "/",
+  "screenshots": [
+    {
+      "src": "/static/icons/Ghosthub1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "GhostHub Media Hub"
+    },
+    {
+      "src": "/static/icons/Ghosthub1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "GhostHub Mobile Feed"
+    }
+  ]
 }

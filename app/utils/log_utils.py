@@ -1,6 +1,5 @@
 import logging
 import re
-import os # Moved import os to the top
 
 class LogObfuscationFilter(logging.Filter):
     """
@@ -44,9 +43,12 @@ class LogObfuscationFilter(logging.Filter):
     def filter(self, record):
         # Handle chat message redaction first
         is_chat_message = False
-        if record.name and record.name.startswith('app.socket_events'):
+        if record.name and (
+            '.chat' in record.name or 
+            'streaming.chat' in record.name
+        ):
             if isinstance(record.msg, str) and not self.PATH_REGEX.search(record.msg) and not self.FILENAME_REGEX.search(record.msg) :
-                # If it's from socket_events and doesn't look like a path or filename, assume it's a chat message.
+                # If it's from the chat runtime and doesn't look like a path or filename, assume it's a chat message.
                 record.msg = self.chat_replacement
                 record.args = () # Clear args for chat messages to prevent further processing
                 is_chat_message = True

@@ -1,0 +1,1389 @@
+/* ===== STREAMING LAYOUT =====
+ * Netflix/HBO Max style horizontal browsing interface
+ * Applied when data-layout="streaming" is set on <html>
+ * Completely replaces the default category view
+ */
+
+/* ===== LAYOUT ACTIVATION ===== */
+[data-layout="streaming"] body {
+    overflow: hidden;
+}
+
+/* ===== HIDE ALL DEFAULT LAYOUT ELEMENTS ===== */
+/* Main content container - hide everything except streaming */
+[data-layout="streaming"] .container {
+    display: none !important;
+}
+
+[data-layout="streaming"] .category-filter-bar,
+[data-layout="streaming"] .load-more-container {
+    display: none !important;
+}
+
+/* Media viewer should show above streaming layout when active */
+[data-layout="streaming"] #media-viewer {
+    z-index: var(--app-shell-z-media-viewer);
+}
+
+/* Make streaming container visible and full screen */
+[data-layout="streaming"] .streaming-container {
+    display: flex !important;
+}
+
+/* ===== FILTER BAR ===== */
+/* The RAGOT slot wrapper must be the sticky element — .streaming-filter-bar lives
+   inside #streaming-filter-bar-slot, which is a flex child of #streaming-container
+   (the scroll root). Sticky on the slot itself lets the filter bar stick to the top. */
+#streaming-filter-bar-slot {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    flex-shrink: 0;
+}
+
+.streaming-filter-bar,
+.gh-streaming__filter-bar {
+    position: relative; /* no longer sticky itself — slot handles it */
+    top: unset;
+    z-index: unset;
+    min-height: var(--app-toolbar-height);
+    padding: var(--app-toolbar-padding-y) var(--app-toolbar-padding-x);
+    background: linear-gradient(to bottom, var(--background-color) 0%, var(--background-color) 80%, transparent 100%);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.streaming-filter-bar .category-active-filter,
+.gh-streaming__filter-bar .category-active-filter {
+    margin-left: auto;
+}
+
+.streaming-filter-buttons,
+.gh-streaming__filter-buttons {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.streaming-filter-btn {
+    min-height: var(--app-touch-target-size);
+    padding: 0 var(--space-md);
+    border-radius: var(--app-surface-radius-sm);
+    border: 1px solid var(--divider-color);
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.streaming-filter-btn:hover {
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border-color: var(--text-tertiary);
+}
+
+.streaming-filter-btn.active {
+    background: var(--accent-color);
+    color: var(--text-primary);
+    border-color: var(--accent-color);
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-lg) var(--space-md);
+    padding-bottom: calc(var(--space-lg) + var(--safe-bottom, 24px));
+}
+
+.pagination-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    font-weight: 500;
+}
+
+.pagination-btn:hover:not([disabled]) {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.pagination-btn.active {
+    background: var(--btn-primary-bg);
+    border-color: transparent;
+    color: var(--btn-primary-fg);
+}
+
+.pagination-btn[disabled] {
+    opacity: 0.4;
+}
+
+.pagination-pages {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.pagination-ellipsis {
+    color: var(--text-tertiary);
+}
+
+.indexing-progress {
+    position: fixed;
+    left: 50%;
+    bottom: calc(20px + var(--safe-bottom));
+    transform: translateX(-50%);
+    width: min(560px, calc(100vw - 24px));
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: rgba(18, 22, 32, 0.94);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    z-index: 1100;
+    pointer-events: none;
+}
+
+.indexing-progress-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.indexing-progress-meta {
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 0.84rem;
+}
+
+.video-thumbnail-container.loading-video {
+    position: relative;
+    pointer-events: none;
+}
+
+.video-thumbnail-container.loading-video::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top: 3px solid var(--accent-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    z-index: 10;
+}
+
+.video-thumbnail-container.loading-video img {
+    opacity: 0.6;
+    filter: blur(2px);
+}
+
+.category-progress-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 5px;
+    overflow: hidden;
+    z-index: 5;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.category-progress-bar .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e50914, #ff6b6b);
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px #e50914, 0 0 20px rgba(229, 9, 20, 0.5);
+}
+
+/* ===== STREAMING CONTAINER ===== */
+/* Default hidden */
+.streaming-container {
+    display: none;
+}
+
+[data-layout="streaming"] .streaming-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0 0 80px 0;
+    /* Bottom padding so last row is visible */
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: fixed;
+    top: var(--app-content-top);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(100vh - var(--app-content-top));
+    max-height: calc(100vh - var(--app-content-top));
+    background: var(--background-color);
+    z-index: var(--app-shell-z-content);
+    view-transition-name: gh-active-layout;
+}
+
+/* ===== HERO SECTION ===== */
+.streaming-hero {
+    position: relative;
+    width: 100%;
+    height: 50vh;
+    min-height: 300px;
+    max-height: 500px;
+    background: linear-gradient(135deg, var(--primary-color-dark) 0%, var(--background-color) 100%);
+    overflow: hidden;
+    flex-shrink: 0;
+    isolation: isolate;
+}
+
+.streaming-hero::before,
+.streaming-hero::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+}
+
+.streaming-hero::before {
+    top: 0;
+    height: clamp(28px, 7vh, 64px);
+    background: linear-gradient(180deg, var(--background-color) 0%, rgba(0, 0, 0, 0) 100%);
+    z-index: 2;
+}
+
+.streaming-hero::after {
+    bottom: 0;
+    height: clamp(120px, 28%, 220px);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, var(--background-color) 100%);
+    z-index: 2;
+}
+
+.streaming-hero-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--space-xl);
+    background: linear-gradient(transparent 0%, var(--background-color) 100%);
+    z-index: 4;
+}
+
+@media (min-width: 700px) {
+    .streaming-hero-content {
+        left: auto;
+        right: var(--app-section-padding-x);
+        bottom: var(--space-xl);
+        width: min(36vw, 460px);
+        padding: 0;
+        background: none;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        text-align: right;
+    }
+
+    .streaming-hero-content > * {
+        margin-left: auto;
+    }
+
+    .streaming-hero-actions {
+        justify-content: flex-end;
+    }
+}
+
+.streaming-hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: var(--space-sm);
+    color: var(--text-primary);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.streaming-hero-meta {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+}
+
+.streaming-hero-actions {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.streaming-hero-btn {
+    padding: var(--space-sm) var(--space-xl);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.streaming-hero-btn.primary {
+    background: var(--text-primary);
+    color: var(--background-color);
+}
+
+.streaming-hero-btn.primary:hover {
+    background: var(--text-secondary);
+    transform: scale(1.05);
+}
+
+.streaming-hero-btn.secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+    backdrop-filter: blur(4px);
+}
+
+.streaming-hero-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.streaming-hero-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    z-index: 1;
+    background: linear-gradient(135deg, var(--surface-color) 0%, var(--background-color) 100%);
+}
+
+.streaming-hero-placeholder {
+    z-index: 0;
+    opacity: 0.35;
+}
+
+.streaming-hero-backdrop[data-image-state="loaded"] {
+    opacity: 0.4;
+    transition: opacity 220ms ease;
+}
+
+.streaming-hero-backdrop[data-image-state="pending"],
+.streaming-hero-backdrop[data-image-state="error"] {
+    opacity: 0;
+}
+
+/* ===== ROW SECTION ===== */
+.streaming-row {
+    padding: var(--space-lg) 0;
+    position: relative;
+}
+
+.streaming-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0 var(--app-section-padding-x);
+    margin-bottom: var(--space-md);
+    animation: gh-fade-up-sm var(--transition-normal) var(--gh-motion-emphasis) both;
+}
+
+.streaming-row-title-group {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.streaming-row-title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    line-height: 1.2;
+}
+
+.streaming-row-title .row-icon {
+    font-size: 1.2rem;
+}
+
+/* Breadcrumb: small muted path shown below the category/folder name */
+.streaming-row-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1.3;
+    opacity: 0.75;
+    padding-left: 2px;
+}
+
+.streaming-row-breadcrumb-icon {
+    width: 12px;
+    height: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.streaming-row-breadcrumb-icon svg {
+    display: block;
+    width: 12px;
+    height: 12px;
+}
+
+.streaming-row-breadcrumb-path {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.streaming-row-count {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    font-weight: 400;
+}
+
+.streaming-row-see-all {
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+    background: none;
+    border: none;
+    padding: var(--space-xs) var(--space-sm);
+}
+
+.streaming-row-see-all:hover {
+    color: var(--accent-color-light);
+    text-decoration: underline;
+}
+
+/* ===== HORIZONTAL SCROLL CONTAINER ===== */
+.streaming-scroll-container {
+    display: flex;
+    gap: var(--space-md);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: var(--space-sm) var(--space-xl);
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+}
+
+.streaming-scroll-container::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+}
+
+/* VirtualScroller container is layout-transparent inside horizontal rows.
+   display:contents makes vs-container invisible to flex, so card elements
+   (and sentinels) become direct flex children of streaming-scroll-container. */
+.streaming-scroll-container .vs-container,
+.streaming-scroll-container .streaming-h-vs,
+.streaming-grid-wrapper .vs-container {
+    display: contents;
+}
+/* Sentinels must not consume layout space but must still be observable by IO.
+   After sentinel repositioning they may move from vs-container into the
+   chunkContainer (streaming-scroll-container or streaming-grid). */
+.streaming-scroll-container .vs-sentinel {
+    flex: none;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+    visibility: hidden;
+}
+.streaming-grid .vs-sentinel {
+    grid-column: 1 / -1;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+    visibility: hidden;
+    overflow: hidden;
+}
+
+
+/* Scroll buttons: edge chevron panels — desktop/laptop only */
+.streaming-row-scroll-btn {
+    display: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 48px;
+    z-index: 10;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+    padding: 0;
+}
+
+.streaming-row-scroll-btn.left {
+    left: 0;
+    background: linear-gradient(to right, var(--background-color, #0f0f17) 0%, transparent 100%);
+}
+
+.streaming-row-scroll-btn.right {
+    right: 0;
+    background: linear-gradient(to left, var(--background-color, #0f0f17) 0%, transparent 100%);
+}
+
+.streaming-row-scroll-btn svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8));
+    flex-shrink: 0;
+}
+
+/* Show on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+    .streaming-row-scroll-btn {
+        display: flex;
+        pointer-events: auto;
+    }
+
+    .streaming-row:hover .streaming-row-scroll-btn {
+        opacity: 1;
+    }
+
+    .streaming-row-scroll-btn:hover svg {
+        transform: scale(1.15);
+        transition: transform 0.1s ease;
+    }
+
+    .streaming-row-scroll-btn:active svg {
+        transform: scale(0.95);
+    }
+
+    /* Hide left button when at scroll start, right button when at scroll end */
+    .streaming-row-scroll-btn.left.at-start,
+    .streaming-row-scroll-btn.right.at-end {
+        opacity: 0 !important;
+        pointer-events: none;
+    }
+}
+
+
+
+/* ===== MEDIA CARD ===== */
+.streaming-card {
+    flex-shrink: 0;
+    width: 200px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--surface-color);
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    position: relative;
+    animation: gh-fade-up-sm var(--transition-normal) var(--gh-motion-emphasis) both;
+    animation-delay: min(calc(var(--card-index, 0) * 25ms), 300ms);
+}
+
+.streaming-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 5;
+}
+
+.streaming-card-thumbnail {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    background: var(--primary-color-dark);
+}
+
+/* Clean hover effect - subtle brightness increase instead of play button overlay */
+.streaming-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    transition: background var(--transition-fast);
+    pointer-events: none;
+}
+
+.streaming-card:hover::after {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.streaming-card-info {
+    padding: var(--space-sm);
+}
+
+.streaming-card-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: var(--space-xs);
+}
+
+.streaming-card-meta {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+/* ===== PROGRESS BAR (Continue Watching) ===== */
+.streaming-card-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.streaming-card-progress-fill {
+    height: 100%;
+    background: var(--accent-color);
+    transition: width 0.3s ease;
+}
+
+/* ===== CATEGORY CARD (Larger for folders) ===== */
+.streaming-card.category-card {
+    width: 280px;
+}
+
+.streaming-card.category-card .streaming-card-thumbnail {
+    aspect-ratio: 16/10;
+}
+
+.streaming-card.category-card .streaming-card-info {
+    padding: var(--space-md);
+}
+
+.streaming-card.category-card .streaming-card-title {
+    font-size: 1rem;
+}
+
+.streaming-card.category-card .streaming-card-count {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Category badge for What's New cards */
+.streaming-card-category-badge {
+    position: absolute;
+    bottom: 40px;
+    left: var(--space-sm);
+    background: rgba(0, 0, 0, 0.75);
+    color: var(--text-primary);
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    backdrop-filter: blur(4px);
+    max-width: calc(100% - 16px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    z-index: 2;
+}
+
+/* Activity indicator on category cards */
+.streaming-card .activity-badge {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    background: var(--accent-color);
+    color: var(--text-primary);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 3;
+}
+
+.streaming-card .activity-badge .activity-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--text-primary);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+}
+
+/* Video type badge */
+.streaming-card-type-badge {
+    position: absolute;
+    top: var(--space-sm);
+    left: var(--space-sm);
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--text-primary);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 0.65rem;
+    z-index: 3;
+}
+
+/* Continue watching card */
+.streaming-card.continue-watching-card {
+    width: 220px;
+}
+
+/* Thumbnail wrapper */
+.streaming-card-thumb-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    background: var(--surface-color);
+}
+
+.streaming-card-thumb-wrap .streaming-card-thumbnail {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    z-index: 1;
+    background: linear-gradient(135deg, var(--surface-color) 0%, var(--background-color) 100%);
+}
+
+/* Streaming cards: images pre-load off-screen; no transition needed */
+[data-layout="streaming"] .streaming-card-thumbnail.lazy-load {
+    opacity: 0;
+    transition: opacity 160ms ease;
+}
+
+[data-layout="streaming"] .streaming-card-thumbnail.lazy-load[data-image-state="loaded"] {
+    opacity: 1;
+}
+
+.streaming-card-thumbnail[data-image-state="pending"]:not(.lazy-load) {
+    opacity: 0;
+}
+
+.streaming-card-thumbnail[data-image-state="loaded"] {
+    opacity: 1;
+    transition: opacity 160ms ease;
+    z-index: 1;
+}
+
+.streaming-card-thumbnail[data-image-state="error"] {
+    opacity: 0;
+    z-index: 1;
+}
+
+/* Progress bar at bottom of thumbnail */
+.streaming-card-thumb-wrap .streaming-card-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    z-index: 4;
+}
+
+/* Row activity indicator */
+.streaming-row-activity {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-left: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Loading state */
+.streaming-no-media {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 50vh;
+    gap: var(--space-sm);
+    text-align: center;
+}
+
+.streaming-no-media-title {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.streaming-no-media-sub {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.streaming-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50vh;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+}
+
+.streaming-loading::after {
+    content: '';
+    width: 24px;
+    height: 24px;
+    margin-left: var(--space-sm);
+    border: 2px solid var(--text-tertiary);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Loading indicator for rows (infinite scroll) */
+.streaming-scroll-container.loading::after {
+    content: '';
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--text-tertiary);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.streaming-card-skeleton {
+    cursor: default;
+    pointer-events: none;
+    animation: none;
+}
+
+.streaming-card-skeleton:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.streaming-card-skeleton-line {
+    height: 0.8rem;
+    border-radius: 999px;
+    background: linear-gradient(110deg, rgba(255, 255, 255, 0.06) 8%, rgba(255, 255, 255, 0.14) 18%, rgba(255, 255, 255, 0.06) 33%);
+    background-size: 200% 100%;
+    animation: ghosthubThumbnailPulse 1.5s linear infinite;
+}
+
+.streaming-card-skeleton-line.short {
+    width: 40%;
+    margin-top: var(--space-xs);
+}
+
+/* Suppress card entry animation on state-driven row refreshes (e.g. viewer close, progress update).
+   .streaming-rows-no-animate is added by JS before rebuild and removed after one rAF. */
+.streaming-rows-no-animate .streaming-card {
+    animation: none;
+}
+
+/* Thumbnail loading state */
+.streaming-card-thumbnail {
+    background: linear-gradient(135deg, var(--surface-color) 0%, var(--background-color) 100%);
+}
+
+.streaming-card-skeleton-placeholder {
+    z-index: 1;
+}
+
+
+/* Scroll snap — proximity so cards settle cleanly after a scroll */
+.streaming-scroll-container {
+    scroll-snap-type: x proximity;
+}
+
+.streaming-card {
+    scroll-snap-align: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .streaming-row-header,
+    .streaming-card {
+        animation: none;
+    }
+}
+
+/* ===== EMPTY STATE ===== */
+.streaming-row-empty {
+    padding: var(--space-xl);
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+}
+
+/* ===== STREAMING CHAT ===== */
+/* Let chat use its default position from chat.css - just add backdrop blur for streaming style */
+[data-layout="streaming"] .chat-container {
+    backdrop-filter: blur(10px);
+}
+
+/* ===== STREAMING HEADER ADJUSTMENTS ===== */
+[data-layout="streaming"] .gh-header {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--app-shell-z-header);
+    border-bottom: none;
+    /* Safari fix: force hardware acceleration to prevent disappearing */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+[data-layout="streaming"] .gh-header__center {
+    opacity: 0.7;
+}
+
+[data-layout="streaming"] .gh-header__center:hover {
+    opacity: 1;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+
+/* Tablet */
+@media (max-width: 768px) {
+    .streaming-hero {
+        height: 40vh;
+        min-height: 250px;
+    }
+
+    .streaming-hero-title {
+        font-size: 1.8rem;
+    }
+
+    .streaming-hero-content {
+        padding: var(--space-lg);
+    }
+
+    .streaming-hero-actions {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .streaming-hero-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .streaming-card {
+        width: 150px;
+    }
+
+    .streaming-row-header {
+        padding: 0 var(--app-section-padding-x);
+    }
+
+    .streaming-scroll-container {
+        padding: var(--space-sm) var(--app-section-padding-x);
+        /* Better touch scrolling */
+        -webkit-overflow-scrolling: touch;
+        scroll-padding: var(--app-section-padding-x);
+    }
+
+    /* On mobile, let chat use its default floating position from chat.css */
+
+    /* Compact row spacing */
+    .streaming-row {
+        padding: var(--space-md) 0;
+    }
+
+    .streaming-row-count {
+        display: none;
+        /* Hide item count on mobile to save space */
+    }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .streaming-card {
+        width: 130px;
+    }
+
+    .streaming-card-info {
+        padding: var(--space-xs);
+    }
+
+    .streaming-card-title {
+        font-size: 0.75rem;
+    }
+
+    .streaming-hero {
+        height: 35vh;
+        min-height: 200px;
+    }
+
+    .streaming-hero-title {
+        font-size: 1.4rem;
+    }
+
+    .streaming-hero-meta {
+        font-size: 0.8rem;
+    }
+
+    .streaming-row-title {
+        font-size: 1rem;
+    }
+
+    .streaming-row-title .row-icon {
+        font-size: 1rem;
+    }
+
+    .streaming-row-breadcrumb {
+        font-size: 0.65rem;
+    }
+
+    /* Bigger touch targets for cards */
+    .streaming-card-overlay {
+        opacity: 0.7;
+        /* Always slightly visible on mobile */
+    }
+
+    .streaming-card-play-btn {
+        width: var(--app-touch-target-size);
+        height: var(--app-touch-target-size);
+    }
+
+    /* Progress bar more visible on small cards */
+    .streaming-card-progress {
+        height: 5px;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Touch devices - show overlay hint */
+    .streaming-card-overlay {
+        opacity: 0;
+    }
+
+    .streaming-card:active .streaming-card-overlay {
+        opacity: 1;
+    }
+
+    /* Disable hover effects that don't work on touch */
+    .streaming-card:hover {
+        transform: none;
+    }
+
+    .streaming-card:active {
+        transform: scale(0.98);
+    }
+
+    /* Ensure smooth scrolling */
+    .streaming-scroll-container {
+        scroll-behavior: smooth;
+        overscroll-behavior-x: contain;
+    }
+}
+
+/* ===== SCROLL TO TOP BUTTON ===== */
+.streaming-scroll-top-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent-color, #6366f1);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    overflow: visible;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease, background 0.2s ease;
+    z-index: 100;
+}
+
+.streaming-scroll-top-btn.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.streaming-scroll-top-btn:hover {
+    background: var(--accent-hover, #4f46e5);
+    transform: translateY(-2px);
+}
+
+.streaming-scroll-top-btn:active {
+    transform: translateY(0);
+}
+
+.streaming-scroll-top-btn svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+    stroke: currentColor;
+    fill: none;
+}
+
+.streaming-scroll-top-btn svg * {
+    stroke: currentColor;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .streaming-scroll-top-btn {
+        bottom: 16px;
+        right: 16px;
+        width: var(--app-touch-target-size-lg);
+        height: var(--app-touch-target-size-lg);
+    }
+
+    .streaming-scroll-top-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Smooth card entrance */
+.streaming-card {
+    animation: cardFadeIn 0.3s ease forwards;
+}
+
+@keyframes cardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== iOS LONG-PRESS FIX ===== */
+/* Prevent iOS default context menu on category cards */
+.category-card {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.category-card img {
+    -webkit-touch-callout: none;
+    pointer-events: none;
+    /* Prevent image save dialog on long-press */
+}
+
+/* ===== SUBFOLDER CARDS (Streaming Layout) ===== */
+.streaming-subfolder-card {
+    cursor: pointer;
+    position: relative;
+}
+
+.streaming-subfolder-card .subfolder-thumb-wrap {
+    position: relative;
+    overflow: hidden;
+}
+
+.streaming-subfolder-card .subfolder-placeholder {
+    z-index: 1;
+    background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.12) 0%, transparent 42%),
+        linear-gradient(145deg, rgba(37, 99, 235, 0.72) 0%, rgba(14, 165, 233, 0.72) 100%);
+}
+
+.streaming-subfolder-card .subfolder-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+.streaming-subfolder-card .subfolder-placeholder-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.2) 0%, transparent 42%),
+        linear-gradient(145deg, var(--primary-color, #2563eb) 0%, var(--accent-color, #0ea5e9) 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    z-index: 3;
+}
+
+/* When a thumbnail is present, make the overlay translucent so the image shows through */
+.streaming-subfolder-card .subfolder-thumb-img ~ .subfolder-placeholder-overlay {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.25) 100%);
+}
+
+.streaming-subfolder-card .subfolder-icon {
+    opacity: 0.95;
+}
+
+.streaming-subfolder-card .subfolder-icon svg {
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+.streaming-subfolder-card .subfolder-count {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+    font-weight: 600;
+}
+
+.streaming-subfolder-card .subfolder-title {
+    font-weight: 600;
+}
+
+/* ===== GRID MODE (Single Category/Subfolder View) ===== */
+.streaming-grid-wrapper {
+    padding: 0 var(--space-xl, 24px);
+    padding-bottom: var(--space-xl, 24px);
+}
+
+/* Grid header — visual separation from rows above */
+.streaming-grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-md, 12px);
+    padding-bottom: var(--space-sm, 8px);
+    border-bottom: 1px solid var(--divider-color, rgba(255, 255, 255, 0.1));
+}
+
+.streaming-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-md, 12px);
+}
+
+/* Subfolder section inside grid — cards flow into grid cells */
+.streaming-grid .streaming-grid-subfolders {
+    display: contents;
+}
+
+/* Subfolder cards in grid fill cells like media cards */
+.streaming-grid .streaming-subfolder-card {
+    width: 100%;
+    flex: none;
+}
+
+/* Cards fill their grid cell instead of using fixed width */
+.streaming-grid .streaming-card {
+    width: 100%;
+    flex: none;
+}
+
+/* Default: unloaded chunks are block elements with height for IntersectionObserver */
+.streaming-grid-chunk {
+    display: block;
+    grid-column: 1 / -1;
+    min-height: 200px;
+}
+
+/* Loaded chunks: cards flow into parent grid */
+.streaming-grid-chunk.loaded {
+    display: contents;
+    min-height: unset;
+    grid-column: unset;
+}
+
+/* Placeholder chunks (previously loaded then unloaded) preserve measured height */
+.streaming-grid-chunk.placeholder {
+    display: block;
+    grid-column: 1 / -1;
+    background: transparent;
+    min-height: unset;
+}
+
+/* Subtle fade-in for grid cards */
+.streaming-grid .streaming-card {
+    animation: gridCardFadeIn 0.2s ease forwards;
+}
+
+@keyframes gridCardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Grid responsive breakpoints ── */
+@media (max-width: 768px) {
+    .streaming-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: var(--space-sm, 8px);
+    }
+
+    .streaming-grid-wrapper {
+        padding: 0 var(--space-md, 12px);
+        padding-bottom: var(--space-md, 12px);
+    }
+}
+
+@media (max-width: 480px) {
+    .streaming-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+}

@@ -1,0 +1,2049 @@
+/* ===== GALLERY LAYOUT =====
+ * Google Photos / Immich style timeline interface
+ * Applied when data-layout="gallery" is set on <html>
+ */
+
+/* ===== LAYOUT ACTIVATION ===== */
+[data-layout="gallery"] body {
+    overflow: hidden;
+}
+
+[data-layout="gallery"] .category-filter-bar,
+[data-layout="gallery"] .load-more-container {
+    display: none !important;
+}
+
+[data-layout="gallery"] #media-viewer {
+    z-index: var(--app-shell-z-media-viewer);
+}
+
+[data-layout="gallery"] .gallery-container {
+    display: flex !important;
+}
+
+/* ===== MAIN CONTAINER ===== */
+.gallery-container {
+    display: none;
+    position: fixed;
+    top: var(--app-content-top);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--background-color);
+    z-index: var(--app-shell-z-content);
+    view-transition-name: gh-active-layout;
+}
+
+/* ===== SIDEBAR (Date Navigation) ===== */
+.gallery-sidebar {
+    width: 56px;
+    flex-shrink: 0;
+    background: var(--background-color);
+    border-right: 1px solid var(--divider-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.gallery-sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+.gallery-month-btn {
+    width: 36px;
+    padding: 5px 0;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-tertiary);
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 999px;
+    text-align: center;
+}
+
+.gallery-month-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.gallery-month-btn.active {
+    background: var(--accent-color);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.3);
+}
+
+.gallery-year-divider {
+    width: 32px;
+    height: 1px;
+    background: var(--divider-color);
+    margin: var(--space-xs) 0;
+}
+
+.gallery-year-label {
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+    font-weight: 600;
+    padding: var(--space-xs) 0;
+}
+
+/* ===== MAIN CONTENT ===== */
+.gallery-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+}
+
+/* RAGOT slot wrappers inside .gallery-main — must be flex passthroughs so that
+   .gallery-scroll-area (flex:1) can still fill the remaining column height. */
+#gallery-timeline-slot {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* Non-scrolling slots (toolbar, mobile timeline, selection toolbar) should not grow */
+#gallery-selection-toolbar-slot,
+#gallery-toolbar-slot,
+#gallery-mobile-timeline-slot {
+    flex-shrink: 0;
+}
+
+/* ===== TOOLBAR ===== */
+/* Gallery uses streaming-filter-bar + gallery-filter-bar for consistency */
+.gallery-filter-bar,
+.gh-gallery__filter-bar {
+    justify-content: space-between;
+    /* Override sticky from streaming-filter-bar - doesn't work with overflow:hidden parent */
+    position: relative;
+    z-index: 100;
+    /* Ensure touch targets work on mobile */
+    pointer-events: auto !important;
+    /* Explicit touch handling */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    /* Ensure nothing can cover this */
+    isolation: isolate;
+}
+
+/* Gallery filter buttons - smaller, more compact style */
+.gallery-filter-bar .streaming-filter-btn,
+.gh-gallery__filter-bar .pill--filter,
+[data-layout="gallery"] .streaming-filter-btn,
+[data-layout="gallery"] .pill--filter {
+    position: relative;
+    z-index: 101;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+}
+
+/* MOBILE FIX: Ensure all gallery-main children before scroll-area can receive touches */
+.gallery-main>*:not(.gallery-scroll-area) {
+    pointer-events: auto !important;
+    position: relative;
+}
+
+.gallery-main>*:not(.gallery-scroll-area) * {
+    pointer-events: auto !important;
+}
+
+.gallery-filter-bar .streaming-filter-buttons,
+.gh-gallery__filter-bar .gh-streaming__filter-buttons {
+    flex-shrink: 0;
+}
+
+.gallery-filter-bar .category-active-filter,
+.gh-gallery__filter-bar .category-active-filter {
+    margin-left: auto;
+}
+
+
+.gallery-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-shrink: 0;
+}
+
+/* Zoom slider */
+.gallery-zoom {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.gallery-zoom-btn {
+    width: var(--app-touch-target-size);
+    height: var(--app-touch-target-size);
+    border-radius: var(--app-surface-radius-sm);
+    border: 1px solid var(--divider-color);
+    background: var(--surface-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.gallery-zoom-btn:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+}
+
+.gallery-zoom-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.5;
+}
+
+/* ===== SCROLL AREA ===== */
+.gallery-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 var(--app-page-padding-x) var(--space-xl);
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scroll on iOS */
+    will-change: scroll-position;
+    transform: translateZ(0);
+    /* GPU acceleration */
+}
+
+/* ===== DATE GROUP ===== */
+.gallery-date-group {
+    margin-top: var(--space-xl);
+}
+
+.gallery-date-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--background-color);
+    min-height: var(--app-toolbar-height);
+    padding: var(--space-sm) 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    border-bottom: 1px solid var(--divider-color);
+    margin-bottom: var(--space-sm);
+    animation: gh-fade-up-sm var(--transition-normal) var(--gh-motion-emphasis) both;
+}
+
+.gallery-date-title {
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.gallery-date-count {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+}
+
+.gallery-date-expand {
+    margin-left: auto;
+    padding: var(--space-xs) var(--space-sm);
+    border: none;
+    background: transparent;
+    color: var(--accent-color);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s ease;
+}
+
+.gallery-date-expand:hover {
+    background: var(--surface-color);
+}
+
+/* ===== MEDIA GRID ===== */
+.gallery-grid {
+    display: grid;
+    gap: 2px;
+    grid-template-columns: repeat(6, 1fr);
+}
+
+.gallery-grid.zoom-1 {
+    grid-template-columns: repeat(10, 1fr);
+}
+
+.gallery-grid.zoom-2 {
+    grid-template-columns: repeat(8, 1fr);
+}
+
+.gallery-grid.zoom-3 {
+    grid-template-columns: repeat(6, 1fr);
+}
+
+.gallery-grid.zoom-4 {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.gallery-grid.zoom-5 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.gallery-grid.zoom-6 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* ===== MEDIA ITEM ===== */
+.gallery-item {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--surface-color);
+    border-radius: var(--app-surface-radius-sm);
+    contain: layout style;
+    /* Performance optimization — removed 'paint' as it breaks touch hit-testing on mobile */
+    animation: gh-fade-up-sm var(--transition-normal) var(--gh-motion-emphasis) both;
+    animation-delay: min(calc(var(--card-index, 0) * 25ms), 300ms);
+}
+
+.gallery-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid transparent;
+    border-radius: var(--app-surface-radius-sm);
+    z-index: 2;
+    pointer-events: none;
+    /* Removed transition for better scroll performance */
+}
+
+.gallery-item:hover::before {
+    border-color: var(--accent-color);
+}
+
+.gallery-item-thumbnail {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    z-index: 1;
+    background: linear-gradient(135deg, var(--surface-color) 0%, var(--background-color) 100%);
+}
+
+.gallery-item-thumbnail-shell {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.gallery-item-thumbnail-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: 3;
+}
+
+.gallery-item-thumbnail-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+}
+
+/* Gallery thumbnails: pre-loaded off-screen, instant display */
+.gallery-item-thumbnail[data-image-state="loaded"] {
+    opacity: 1;
+    transition: opacity 160ms ease;
+}
+
+.gallery-item-thumbnail[data-image-state="pending"] {
+    opacity: 0;
+    transition: opacity 160ms ease;
+}
+
+.gallery-item-thumbnail[data-image-state="error"] {
+    opacity: 0;
+}
+
+/* Selection circle (Google Photos style) */
+.gallery-item-check {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    /* Only opacity, not all */
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-item:hover .gallery-item-check {
+    opacity: 1;
+}
+
+.gallery-item-check.selected {
+    opacity: 1;
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.gallery-item-check svg {
+    width: 14px;
+    height: 14px;
+    color: white;
+    opacity: 0;
+}
+
+.gallery-item-check.selected svg {
+    opacity: 1;
+}
+
+/* Video badge */
+.gallery-item-video {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    z-index: 4;
+}
+
+.gallery-item-video svg {
+    width: 10px;
+    height: 10px;
+}
+
+/* ===== DATE GROUP CONTROLS (SHOW MORE / SHOW LESS) ===== */
+.gallery-date-controls {
+    padding: var(--space-sm) 0;
+    display: flex;
+    justify-content: center;
+}
+
+.gallery-show-more-btn {
+    padding: var(--space-xs) var(--space-lg);
+    border: 1px solid var(--divider-color);
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.gallery-show-more-btn:hover {
+    background: var(--surface-color);
+    border-color: var(--text-tertiary);
+    color: var(--text-primary);
+}
+
+.gallery-show-more-btn:active {
+    transform: scale(0.98);
+}
+
+/* ===== VIRTUAL SCROLL CHUNKS ===== */
+.gallery-chunk {
+    min-height: 100px;
+}
+
+.gallery-chunk-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl);
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+}
+
+/* ===== LOADING / EMPTY ===== */
+.gallery-loading,
+.gallery-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: var(--space-md);
+}
+
+.gallery-empty-icon {
+    font-size: 3rem;
+    color: var(--text-tertiary);
+}
+
+.gallery-loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--divider-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    will-change: transform;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.gallery-empty-icon {
+    font-size: 2.5rem;
+    opacity: 0.4;
+}
+
+/* ===== LOAD MORE (bottom) ===== */
+.gallery-load-more {
+    padding: var(--space-xl) 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.gallery-load-more-btn {
+    padding: var(--space-sm) var(--space-xl);
+    border: 1px solid var(--divider-color);
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.gallery-load-more-btn:hover {
+    background: var(--surface-color);
+    color: var(--text-primary);
+}
+
+.gallery-load-more-hint {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+/* ===== RESPONSIVE ===== */
+
+/* Tablet (768px) */
+@media (max-width: 768px) {
+    .gallery-sidebar {
+        display: none;
+        /* Ensure hidden sidebar doesn't block touches */
+        pointer-events: none;
+        visibility: hidden;
+        position: absolute;
+        left: -9999px;
+    }
+
+    .gallery-container { flex-direction: column; }
+
+    .gallery-main {
+        width: 100%;
+    }
+
+    .gallery-filter-bar {
+        padding: var(--app-toolbar-padding-y) var(--app-toolbar-padding-x);
+        min-height: var(--app-toolbar-height);
+        gap: var(--space-sm);
+        align-items: flex-start;
+    }
+
+    .gallery-filter-bar .streaming-filter-buttons {
+        flex: 1 1 100%;
+        flex-wrap: wrap;
+    }
+
+    .gallery-filter-bar .category-active-filter {
+        order: 3;
+        flex: 1 1 100%;
+        margin-left: 0;
+    }
+
+    .gallery-toolbar-right {
+        display: none;
+    }
+
+    .gallery-scroll-area { padding: 0 var(--app-page-padding-x) var(--space-lg); }
+
+    .gallery-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2px;
+    }
+
+    .gallery-grid.zoom-1 {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .gallery-grid.zoom-2 {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .gallery-grid.zoom-3 {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .gallery-grid.zoom-4 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .gallery-grid.zoom-5 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .gallery-grid.zoom-6 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .gallery-chip {
+        min-height: var(--app-touch-target-size);
+        padding: 0 var(--space-sm);
+        font-size: 0.8rem;
+        flex-shrink: 0;
+    }
+
+    .gallery-chip svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .gallery-date-header {
+        padding: var(--space-xs) 0;
+    }
+
+    .gallery-date-group {
+        margin-top: var(--space-sm);
+    }
+
+    .gallery-upload-btn { font-size: 0.75rem; }
+}
+
+/* ===== MOBILE TIMELINE NAV ===== */
+/* Hidden on desktop, shown on mobile/tablet */
+.gallery-mobile-timeline-wrapper {
+    display: none;
+}
+
+.gallery-mobile-timeline {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .gallery-mobile-timeline-wrapper {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 4px var(--space-sm);
+    }
+
+    .gallery-mobile-timeline-wrapper::-webkit-scrollbar {
+        display: none;
+    }
+
+    .gallery-mobile-timeline {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+
+    .gallery-mobile-year {
+        font-size: 0.6rem;
+        font-weight: 600;
+        color: var(--text-tertiary);
+        padding: 0 2px;
+    }
+
+    .gallery-mobile-month {
+        min-height: 28px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        border: 1px solid var(--divider-color);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.64rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .gallery-mobile-month:active {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        color: white;
+    }
+
+    .gallery-mobile-month:active {
+        transform: scale(0.95);
+    }
+
+    .gallery-mobile-month.active,
+    .gallery-overlay-timeline-month.active {
+        background: var(--accent-color);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.3);
+    }
+
+    /* Collapsible year button */
+    .gallery-mobile-year-btn {
+        min-height: 28px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(var(--accent-color-rgb), 0.24);
+        background: rgba(var(--accent-color-rgb), 0.14);
+        color: var(--text-primary);
+        font-size: 0.64rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .gallery-mobile-year-btn.expanded {
+        background: var(--accent-color);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.3);
+    }
+
+    .gallery-mobile-year-btn:not(.expanded) {
+        background: transparent;
+        color: var(--text-secondary);
+        border-color: var(--divider-color);
+    }
+
+    /* Months container - hidden when collapsed */
+    .gallery-mobile-year-months {
+        display: none;
+        gap: 4px;
+    }
+
+    .gallery-mobile-year-months.expanded {
+        display: contents;
+    }
+}
+
+/* Mobile (480px) */
+@media (max-width: 480px) {
+    .gallery-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+    }
+
+    .gallery-grid.zoom-1,
+    .gallery-grid.zoom-2,
+    .gallery-grid.zoom-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .gallery-grid.zoom-4,
+    .gallery-grid.zoom-5,
+    .gallery-grid.zoom-6 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .gallery-date-title {
+        font-size: 0.8rem;
+    }
+
+    .gallery-date-count {
+        font-size: 0.7rem;
+    }
+
+    .gallery-item-check {
+        width: 28px;
+        height: 28px;
+        top: 6px;
+        left: 6px;
+    }
+
+    /* Expand touch target without changing visual size */
+    .gallery-item-check::after {
+        content: '';
+        position: absolute;
+        inset: -10px;
+    }
+
+    .gallery-item-check svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Always show checkbox on mobile for easier tapping */
+    .gallery-item .gallery-item-check {
+        opacity: 0.6;
+    }
+
+    .gallery-show-more-btn,
+    .gallery-load-more-btn {
+        padding: var(--space-xs) var(--space-md);
+        font-size: 0.8rem;
+    }
+
+    .gallery-selection-toolbar {
+        flex-wrap: nowrap;
+        gap: var(--space-sm);
+        padding: var(--space-xs) var(--space-sm);
+        font-size: 0.8rem;
+    }
+
+    .gallery-selection-info {
+        gap: var(--space-xs);
+    }
+
+    .gallery-selection-count {
+        font-size: 0.8rem;
+    }
+
+    .gallery-selection-close {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .gallery-action-btn {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+
+    .gallery-action-btn svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    /* Hide marquee on touch/small devices */
+    .gallery-marquee {
+        display: none !important;
+    }
+}
+
+/* Extra small screens (400px) - match header height */
+@media (max-width: 400px) {
+    .gallery-filter-bar {
+        padding: var(--app-toolbar-padding-y) var(--app-toolbar-padding-x);
+    }
+}
+
+/* Touch devices */
+@media (hover: none) {
+    .gallery-item:hover .gallery-item-thumbnail {
+        transform: none;
+    }
+
+    .gallery-item:active .gallery-item-thumbnail {
+        transform: scale(0.98);
+    }
+
+    .gallery-item-check {
+        opacity: 0.7;
+    }
+}
+
+/* ===== HEADER ===== */
+[data-layout="gallery"] .gh-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--app-shell-z-header);
+}
+
+[data-layout="gallery"] .chat-container {
+    backdrop-filter: blur(10px);
+}
+
+/* ===== SELECTION UI ===== */
+.gallery-item.selected {
+    outline: 3px solid var(--accent-color, #4a9eff);
+    outline-offset: -3px;
+    box-shadow: 0 0 0 4px rgba(var(--accent-color-rgb, 74, 158, 255), 0.3),
+        inset 0 0 20px rgba(var(--accent-color-rgb, 74, 158, 255), 0.15);
+    transform: scale(0.96);
+    z-index: 10;
+}
+
+.gallery-item.selected::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(var(--accent-color-rgb, 74, 158, 255), 0.2) 0%, transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+.gallery-item.selected .gallery-item-check {
+    background: var(--accent-color, #4a9eff);
+    border-color: var(--accent-color, #4a9eff);
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(var(--accent-color-rgb, 74, 158, 255), 0.5);
+}
+
+.gallery-item.selected .gallery-item-check svg {
+    opacity: 1;
+    stroke: white;
+}
+
+.gallery-item-check.checked {
+    background: var(--accent-color, #4a9eff);
+    border-color: var(--accent-color, #4a9eff);
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(var(--accent-color-rgb, 74, 158, 255), 0.5);
+}
+
+.gallery-item-check.checked svg {
+    opacity: 1;
+}
+
+/* ===== SELECTION TOOLBAR ===== */
+.gallery-selection-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--app-toolbar-padding-y) var(--app-toolbar-padding-x);
+    background: var(--gh-surface-glass-strong);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    color: var(--text-primary);
+    border: 1px solid var(--divider-color);
+    border-radius: var(--app-surface-radius-sm);
+    margin-bottom: var(--space-sm);
+    animation: slideDown 0.2s ease;
+    font-size: 0.85rem;
+    box-shadow: var(--gh-shadow-float, 0 4px 16px rgba(0, 0, 0, 0.25));
+    /* Ensure proper stacking and touch targets */
+    position: relative;
+    z-index: 102;
+    pointer-events: auto;
+    touch-action: manipulation;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.gallery-selection-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    /* Ensure touch events reach children */
+    pointer-events: auto;
+}
+
+.gallery-selection-close {
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 50%;
+    width: var(--app-touch-target-size-lg);
+    height: var(--app-touch-target-size-lg);
+    min-width: var(--app-touch-target-size-lg);
+    min-height: var(--app-touch-target-size-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    /* Ensure button receives touch events */
+    pointer-events: auto;
+    position: relative;
+    z-index: 103;
+}
+
+.gallery-selection-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.gallery-selection-close svg {
+    width: 30px;
+    height: 30px;
+    stroke: var(--text-primary);
+    pointer-events: none;
+}
+
+.gallery-selection-count {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--accent-color);
+}
+
+.gallery-selection-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.gallery-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: var(--app-touch-target-size);
+    padding: 0 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--divider-color);
+    border-radius: var(--app-surface-radius-sm);
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.gallery-action-btn:hover {
+    background: rgba(var(--accent-color-rgb, 74, 158, 255), 0.15);
+    border-color: rgba(var(--accent-color-rgb, 74, 158, 255), 0.3);
+}
+
+.gallery-action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.gallery-action-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ===== UPLOAD BUTTON ===== */
+.gallery-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: var(--app-touch-target-size);
+    padding: 0 12px;
+    background: transparent;
+    border: 1px solid var(--border-color, #444);
+    border-radius: var(--app-surface-radius-sm);
+    color: var(--text-secondary, #aaa);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gallery-upload-btn:hover {
+    background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+    color: var(--text-primary, #fff);
+    border-color: var(--text-secondary, #888);
+}
+
+.gallery-upload-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ===== UPLOAD MODAL ===== */
+.gallery-upload-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-upload-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.gallery-upload-content {
+    position: relative;
+    width: 90%;
+    max-width: 500px;
+    background: var(--bg-secondary, #1a1a2e);
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.gallery-upload-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+.gallery-upload-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.gallery-upload-close {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.gallery-upload-close:hover {
+    background: var(--hover-bg, #333);
+}
+
+.gallery-upload-close svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--text-secondary, #888);
+}
+
+.gallery-upload-body {
+    padding: 20px;
+}
+
+.gallery-upload-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    border: 2px dashed var(--border-color, #444);
+    border-radius: 12px;
+    background: var(--bg-tertiary, #0f0f1a);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.gallery-upload-dropzone.dragover {
+    border-color: var(--accent-color, #4a9eff);
+    background: rgba(74, 158, 255, 0.1);
+}
+
+.gallery-upload-dropzone svg {
+    width: 48px;
+    height: 48px;
+    stroke: var(--text-secondary, #666);
+    margin-bottom: 12px;
+}
+
+.gallery-upload-dropzone p {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    color: var(--text-primary, #fff);
+}
+
+.gallery-upload-dropzone span {
+    color: var(--text-secondary, #888);
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+}
+
+.gallery-upload-browse {
+    padding: 10px 20px;
+    background: var(--accent-color, #4a9eff);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.gallery-upload-browse:hover {
+    background: var(--accent-hover, #3a8eef);
+}
+
+.gallery-upload-category {
+    margin-top: 16px;
+}
+
+.gallery-upload-category label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #888);
+}
+
+.gallery-upload-category select {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg-tertiary, #0f0f1a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    color: var(--text-primary, #fff);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.gallery-upload-category select:focus {
+    outline: none;
+    border-color: var(--accent-color, #4a9eff);
+}
+
+.gallery-upload-files {
+    margin-top: 16px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.gallery-upload-file {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--bg-tertiary, #0f0f1a);
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.gallery-upload-file-name {
+    flex: 1;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gallery-upload-file-size {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #888);
+    margin: 0 12px;
+}
+
+.gallery-upload-file-remove {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #888);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.gallery-upload-file-remove:hover {
+    background: rgba(255, 100, 100, 0.2);
+    color: #ff6b6b;
+}
+
+.gallery-upload-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color, #333);
+}
+
+.gallery-upload-cancel {
+    padding: 10px 20px;
+    background: var(--bg-tertiary, #0f0f1a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    color: var(--text-primary, #fff);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.gallery-upload-cancel:hover {
+    background: var(--hover-bg, #333);
+}
+
+.gallery-upload-submit {
+    padding: 10px 24px;
+    background: var(--accent-color, #4a9eff);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gallery-upload-submit:hover:not(:disabled) {
+    background: var(--accent-hover, #3a8eef);
+}
+
+.gallery-upload-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Spinner for buttons */
+.gallery-btn-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* ===== MARQUEE SELECTION ===== */
+.gallery-marquee {
+    position: absolute;
+    border: 2px dashed var(--accent-color, #4a9eff);
+    background: rgba(74, 158, 255, 0.1);
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+}
+
+.gallery-marquee.active {
+    display: block;
+}
+
+.gallery-scroll-area {
+    position: relative;
+    user-select: none;
+}
+
+/* ===== DROP OVERLAY ===== */
+/* Note: This overlay should be inside .gallery-scroll-area, not .gallery-main */
+/* to avoid blocking toolbar touch events on mobile */
+.gallery-drop-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(74, 158, 255, 0.15);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    border: 3px dashed var(--accent-color, #4a9eff);
+    border-radius: 12px;
+    margin: 8px;
+}
+
+.gallery-drop-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.gallery-drop-content {
+    text-align: center;
+    color: var(--accent-color, #4a9eff);
+}
+
+.gallery-drop-content svg {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    stroke: var(--accent-color, #4a9eff);
+}
+
+.gallery-drop-content p {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* ===== DROP FILES PREVIEW POPUP ===== */
+.gallery-drop-preview {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-drop-preview-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.gallery-drop-preview-content {
+    position: relative;
+    width: 90%;
+    max-width: 480px;
+    max-height: 80vh;
+    background: var(--bg-secondary, #1a1a2e);
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    animation: modalIn 0.2s ease;
+}
+
+.gallery-drop-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+.gallery-drop-preview-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.gallery-drop-preview-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.gallery-drop-preview-close:hover {
+    color: var(--text-primary, #fff);
+}
+
+.gallery-drop-preview-drive,
+.gallery-drop-preview-category {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+.gallery-drop-preview-drive label,
+.gallery-drop-preview-category label {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #888);
+    white-space: nowrap;
+    min-width: 70px;
+}
+
+.gallery-drop-preview-drive select,
+.gallery-drop-preview-category select {
+    flex: 1;
+    padding: 8px 10px;
+    background: var(--bg-tertiary, #0f0f1a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    color: var(--text-primary, #fff);
+    font-size: 0.85rem;
+}
+
+.gallery-drop-preview-drive select:disabled,
+.gallery-drop-preview-category select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Folder Tree Styles */
+.folder-tree-container {
+    flex: 1;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    background: var(--bg-tertiary, #0f0f1a);
+}
+
+.folder-tree-placeholder {
+    padding: 12px;
+    color: var(--text-secondary, #888);
+    font-size: 0.85rem;
+}
+
+.folder-tree-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid var(--border-color, #222);
+    font-size: 0.85rem;
+}
+
+.folder-tree-item:last-child {
+    border-bottom: none;
+}
+
+.folder-tree-item:hover {
+    background: var(--bg-hover, #2a2a2a);
+}
+
+.folder-tree-item.selected {
+    background: var(--accent-color, #4a9eff);
+    color: white;
+}
+
+.folder-tree-toggle {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--text-secondary, #888);
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+.folder-tree-toggle.has-children {
+    cursor: pointer;
+}
+
+.folder-tree-toggle.has-children:hover {
+    color: var(--text-primary, #fff);
+}
+
+.folder-tree-icon {
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.folder-tree-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.folder-tree-children {
+    display: block;
+}
+
+.folder-tree-children.collapsed {
+    display: none;
+}
+
+.folder-tree-root,
+.folder-tree-new {
+    font-weight: 500;
+}
+
+.gallery-drop-preview-files {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+    max-height: 300px;
+}
+
+.gallery-drop-file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    transition: background 0.15s;
+}
+
+.gallery-drop-file:hover {
+    background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+}
+
+.gallery-drop-file-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.gallery-drop-file-name {
+    flex: 1;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gallery-drop-file-size {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #888);
+    flex-shrink: 0;
+}
+
+.gallery-drop-file-remove {
+    background: rgba(255, 100, 100, 0.15);
+    border: 1px solid rgba(255, 100, 100, 0.3);
+    color: #ff6b6b;
+    font-size: 0.7rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+
+.gallery-drop-file-remove:hover {
+    background: rgba(255, 100, 100, 0.3);
+    border-color: #ff6b6b;
+}
+
+.gallery-drop-preview-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color, #333);
+}
+
+.gallery-drop-preview-total {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #888);
+}
+
+.gallery-drop-preview-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.gallery-drop-cancel {
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid var(--border-color, #444);
+    border-radius: 6px;
+    color: var(--text-primary, #fff);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.gallery-drop-cancel:hover {
+    background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+.gallery-drop-upload {
+    padding: 8px 16px;
+    background: var(--accent-color, #4a9eff);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.gallery-drop-upload:hover:not(:disabled) {
+    background: var(--accent-hover, #3a8eef);
+}
+
+.gallery-drop-upload:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ===== DROP PREVIEW MOBILE ===== */
+@media (max-width: 480px) {
+    .gallery-drop-preview-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+
+    .gallery-drop-preview-header {
+        padding: 10px 12px;
+    }
+
+    .gallery-drop-preview-header h3 {
+        font-size: 0.9rem;
+    }
+
+    .gallery-drop-preview-drive,
+    .gallery-drop-preview-category {
+        padding: 8px 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .gallery-drop-preview-drive label,
+    .gallery-drop-preview-category label {
+        min-width: auto;
+    }
+
+    .gallery-drop-preview-drive select,
+    .gallery-drop-preview-category select {
+        width: 100%;
+    }
+
+    .gallery-drop-preview-files {
+        max-height: 200px;
+    }
+
+    .gallery-drop-file {
+        padding: 6px 12px;
+        gap: 6px;
+    }
+
+    .gallery-drop-file-name {
+        font-size: 0.8rem;
+    }
+
+    .gallery-drop-file-size {
+        font-size: 0.7rem;
+    }
+
+    .gallery-drop-file-remove {
+        font-size: 0.65rem;
+        padding: 3px 6px;
+    }
+
+    .gallery-drop-preview-footer {
+        padding: 10px 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .gallery-drop-preview-total {
+        width: 100%;
+        text-align: center;
+    }
+
+    .gallery-drop-preview-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .gallery-drop-cancel,
+    .gallery-drop-upload {
+        flex: 1;
+        text-align: center;
+    }
+}
+
+/* Processing Notifications */
+.gallery-processing-notifications {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 320px;
+    pointer-events: none;
+}
+
+.gallery-processing-notification {
+    background: rgba(28, 28, 30, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    animation: gallery-notification-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: auto;
+}
+
+.gallery-processing-notification.fade-out {
+    animation: gallery-notification-out 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.gallery-processing-notification .notification-icon {
+    color: var(--accent-color);
+    animation: spin 3s linear infinite;
+    flex-shrink: 0;
+}
+
+.gallery-processing-notification.pending .notification-icon {
+    color: #666;
+    animation: none;
+}
+
+.gallery-processing-notification .notification-content {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.gallery-processing-notification .notification-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #fff;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gallery-processing-notification .notification-progress-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.gallery-processing-notification .notification-progress-fill {
+    height: 100%;
+    width: 0;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+@keyframes gallery-notification-in {
+    from {
+        transform: translateX(100%) scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes gallery-notification-out {
+    to {
+        transform: translateX(100%) scale(0.9);
+        opacity: 0;
+    }
+}
+
+.gallery-item-status-label {
+    position: absolute;
+    bottom: 12px;
+    left: 4px;
+    right: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 4px 6px;
+    border-radius: 4px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gallery-item-status-label.generating {
+    color: #ffd60a;
+    /* Bright yellow/orange for active */
+}
+
+.gallery-item-status-label.pending {
+    color: #8e8e93;
+    /* Gray for pending */
+}
+
+/* ===== MONTH OVERLAY ===== */
+
+/* ===== MONTH OVERLAY (reuses .modal pattern) ===== */
+
+/* Sit below media-viewer (z-index: 200) so viewer opens on top and
+   the overlay stays in place for the user to return to. */
+.gallery-month-modal {
+    z-index: calc(var(--app-shell-z-media-viewer) - 10);
+}
+
+/* Wider than default modals to fit a grid of media */
+.gallery-month-modal .modal__content,
+.gallery-month-modal .modal-content {
+    max-width: 900px;
+    padding: 0;
+}
+
+.gallery-month-modal .modal__header,
+.gallery-month-modal .modal-header {
+    padding: var(--app-toolbar-padding-y) var(--app-section-padding-x);
+    margin-bottom: 0;
+}
+
+.gallery-month-modal .modal__body,
+.gallery-month-modal .modal-body {
+    padding: var(--space-md) var(--app-section-padding-x) var(--app-modal-padding);
+    margin-bottom: 0;
+    position: relative;
+    user-select: none;
+}
+
+.gallery-month-modal .modal__body > .gallery-grid,
+.gallery-month-modal .modal-body > .gallery-grid {
+    width: 100%;
+}
+
+.gallery-month-modal .gallery-month-loading,
+.gallery-month-modal .gallery-month-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    color: var(--text-tertiary);
+}
+
+/* ===== OVERLAY TIMELINE NAVIGATION ===== */
+.gallery-overlay-timeline {
+    border-bottom: 1px solid var(--divider-color);
+}
+
+/* Force mobile-timeline classes to display inside the overlay (they're hidden by default on desktop) */
+.gallery-overlay-timeline .gallery-mobile-timeline {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    min-width: max-content;
+}
+
+.gallery-overlay-timeline-months {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 16px;
+    box-sizing: border-box;
+}
+
+.gallery-overlay-timeline-months::-webkit-scrollbar { display: none; }
+
+/* Active state for overlay month pills (reuses .gallery-mobile-month base styles) */
+.gallery-overlay-timeline-month.active {
+    background: var(--accent-color);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.3);
+}
+
+/* Prev/next nav arrows — fixed at viewport center */
+.gallery-month-nav-arrow {
+    position: fixed;
+    top: calc(50% - 28px);
+    z-index: 195;
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    border: 1px solid var(--divider-color);
+    background: var(--gh-surface-glass-strong);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition-fast) ease, color var(--transition-fast) ease;
+    box-shadow: var(--gh-shadow-float);
+    backdrop-filter: blur(20px) saturate(170%);
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+}
+
+.gallery-month-nav-arrow:hover {
+    background: rgba(var(--accent-color-rgb), 0.15);
+    color: var(--accent-color);
+}
+
+.gallery-month-nav-arrow svg {
+    width: 36px;
+    height: 36px;
+    pointer-events: none;
+}
+
+.gallery-month-nav-arrow.prev { left: 12px; }
+.gallery-month-nav-arrow.next { right: 12px; }
+
+.gallery-month-nav-arrow.hidden {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* No selection UI inside the month overlay */
+.gallery-month-modal .gallery-item-check {
+    display: none;
+}
+
+/* Date headers in the main timeline are clickable */
+.gallery-date-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.gallery-date-header:hover .gallery-date-title {
+    color: var(--accent-color);
+}
+
+.gallery-date-open-icon {
+    display: flex;
+    align-items: center;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.gallery-date-header:hover .gallery-date-open-icon {
+    opacity: 1;
+    color: var(--accent-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gallery-date-header,
+    .gallery-item {
+        animation: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .gallery-month-nav-arrow {
+        top: calc(50% - 24px);
+        width: 48px;
+        height: 48px;
+    }
+    .gallery-month-nav-arrow svg {
+        width: 30px;
+        height: 30px;
+    }
+    .gallery-month-nav-arrow.prev { left: 4px; }
+    .gallery-month-nav-arrow.next { right: 4px; }
+
+    .gallery-month-modal .modal__header,
+    .gallery-month-modal .modal-header {
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .gallery-month-modal .modal__body,
+    .gallery-month-modal .modal-body {
+        padding: var(--space-sm);
+    }
+}

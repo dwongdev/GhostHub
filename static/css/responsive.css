@@ -1,5 +1,6 @@
 /* Responsive Styles for Mobile Devices */
 @media (max-width: 768px) {
+
     /* Adjust root variables for mobile */
     :root {
         --space-xs: 4px;
@@ -7,215 +8,367 @@
         --space-md: 12px;
         --space-lg: 16px;
         --space-xl: 24px;
+        --app-header-height: 44px;
+        --app-content-top: var(--app-header-height);
+        --app-page-padding-x: var(--space-md);
+        --app-overlay-top-offset: calc(var(--app-header-height) + var(--space-sm));
+        --app-toolbar-height: 44px;
+        --app-toolbar-padding-y: var(--space-sm);
+        --app-toolbar-padding-x: var(--space-md);
+        --app-section-padding-x: var(--space-md);
+        --app-modal-padding: var(--space-lg);
+        --app-touch-target-size: 44px;
+        --app-touch-target-size-lg: 44px;
+        --app-back-button-size: 40px;
     }
-    
+
+    /* Tighter button sizing on mobile — base ~36px, small ~35px */
+    button {
+        padding: 8px var(--space-md);
+        font-size: 0.85rem;
+    }
+
+    .btn-small {
+        padding: 8px var(--space-md);
+        font-size: 0.8rem;
+    }
+
     /* Adjust header for mobile */
-    .app-header {
-        padding: var(--space-xs) var(--space-sm);
-        height: 40px;
-        position: sticky;
-        top: 0;
-        z-index: 980;
-        display: flex !important;
+    .gh-header {
+        padding: 0 var(--app-page-padding-x);
+        height: var(--app-header-height);
+        gap: var(--space-xs);
     }
-    
-    .header-title {
-        font-size: 0.9rem;
+
+    .gh-header__left {
+        min-width: auto;
+        flex-shrink: 1;
     }
-    
-    .header-logo {
-        height: 16px;
-        width: 16px;
-        margin-right: 3px;
+
+    .gh-header__right {
+        min-width: auto;
+        gap: 2px;
+        flex-shrink: 0;
     }
-    
-    .sync-status-display,
-    .sync-toggle-container {
-        flex-basis: 80px;
-        font-size: 0.75rem;
+
+    .gh-header__center {
+        flex: 0 1 auto;
+        min-width: 0;
     }
-    
-    /* Increase GitHub icon spacing on mobile */
-    .header-github {
-        margin-right: var(--space-xl);
+
+    .gh-header__brand {
+        padding: 2px 4px;
     }
-    
-    .header-github svg {
+
+    .gh-header__title {
+        font-size: 0.85rem;
+    }
+
+    .gh-header__logo {
         height: 20px;
         width: 20px;
     }
-    
-    /* Enhance TikTok-style interface for mobile */
-    .category-list {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Smaller cards on mobile */
-        gap: var(--space-sm); /* Tighter spacing */
-        padding: var(--space-xs);
+
+    .sync-status-display {
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        max-width: 70px;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-    
+
+    .gh-header__btn {
+        width: var(--app-touch-target-size);
+        height: var(--app-touch-target-size);
+        flex-shrink: 0;
+    }
+
+    .gh-header__btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .gh-header__sync-btn {
+        padding: 0 12px;
+        font-size: 0.7rem;
+        height: 34px;
+    }
+
+
+
     .category-item {
-        height: 200px; /* Shorter cards on mobile */
+        height: 200px;
+        /* Shorter cards on mobile */
     }
-    
+
     .thumbnail {
-        height: 140px; /* Adjust thumbnail height for mobile */
+        height: 140px;
+        /* Adjust thumbnail height for mobile */
     }
-    
+
     .category-info {
         font-size: 0.9rem;
         bottom: 36px;
     }
-    
+
     .media-count-badge {
         font-size: 0.7rem;
         padding: 2px 6px;
     }
-    
+
     .media-type-icon {
         font-size: 1rem;
         padding: 2px 6px;
     }
-    
+
+    .category-name-label {
+        font-size: 0.75rem;
+        padding: 3px 6px;
+        max-width: calc(100% - 80px);
+        /* Adjust for smaller cards */
+    }
+
     /* Enhance TikTok-style media viewing */
-    #tiktok-container {
-        background-color: #000; /* Pure black background for better contrast */
+    #media-viewer {
+        background-color: #000;
+        /* Pure black background for better contrast */
     }
-    
-    /* Make swipe indicators more visible on mobile */
-    .swipe-indicator {
-        width: 48px;
-        height: 48px;
-        font-size: 1.5rem;
-    }
-    
+
+
+
     /* Enhance media controls for touch */
     .media-controls {
         bottom: var(--space-lg);
     }
-    
+
     .media-controls button {
         width: 56px;
         height: 56px;
         font-size: 1.25rem;
     }
-    
+
     .media-controls button.primary {
         width: 64px;
         height: 64px;
     }
-    
-    /* Improve back button for mobile and small windows */
-    .back-button {
-        top: calc(40px + var(--space-md)); /* Position below mobile header */
-        left: var(--space-md);
-        width: 48px;
-        height: 48px;
-        font-size: 1.5rem;
-        z-index: 1001; /* Ensure above other elements */
-        pointer-events: auto !important; /* Force clickability */
+
+    /* Improve back button for mobile */
+    .gh-back-btn {
+        top: var(--app-overlay-top-offset);
+        left: var(--app-page-padding-x);
+        width: var(--app-back-button-size);
+        height: var(--app-back-button-size);
+        font-size: 1.1rem;
+        z-index: 1001;
+        pointer-events: auto !important;
     }
-    
+
     /* Ensure no elements cover the back button in small windows */
     @media (max-width: 1024px) {
-        .back-button {
+        .gh-back-btn {
             position: fixed;
             z-index: 1001;
             pointer-events: auto;
         }
+
         .controls-wrapper {
             pointer-events: none;
         }
     }
-    
+
     /* Mobile-specific chat styles */
     .chat-container {
         bottom: 0;
-        height: 40px; /* Smaller collapsed height */
+        height: 40px;
+        /* Smaller collapsed height */
     }
-    
+
     .chat-container.expanded {
-        height: 50%; /* Use percentage of screen height */
+        height: 50%;
+        /* Use percentage of screen height */
         max-height: 300px;
     }
-    
+
     .chat-header {
         padding: var(--space-xs) var(--space-md);
     }
-    
+
     .chat-message {
-        max-width: 90%; /* Wider messages on mobile */
+        max-width: 90%;
+        /* Wider messages on mobile */
         padding: var(--space-xs) var(--space-md);
         margin-bottom: var(--space-sm);
     }
-    
+
     .chat-input {
-        font-size: 1rem; /* Larger font for better typing on mobile */
+        font-size: 1rem;
+        /* Larger font for better typing on mobile */
         padding: var(--space-xs) var(--space-md);
     }
-    
+
     .chat-form {
         padding: var(--space-xs);
     }
-    
+
     .chat-send {
         width: 36px;
         height: 36px;
     }
-    
+
     /* Adjust spacing for mobile */
     .container {
-        padding: var(--space-md);
-        height: calc(100vh - 40px); /* Adjust for smaller header */
-        padding-top: calc(var(--space-lg) + 10px); /* Increased top padding to prevent content hiding behind header */
+        padding: var(--space-md) var(--app-page-padding-x);
+        height: calc(100vh - var(--app-content-top));
+        padding-top: var(--space-lg);
         margin-top: 0;
     }
-    
-    /* Fix for add category form being hidden behind header */
-    .add-category-form-container {
-        margin-top: calc(var(--space-xl) + 10px); /* Increased top margin to ensure visibility */
-        padding-top: var(--space-lg);
-    }
-    
+
+
+
     /* Ensure buttons are large enough for touch */
     .delete-btn {
         width: 40px;
         height: 40px;
         font-size: 1.1rem;
     }
-    
+
     /* Improve form elements for mobile */
     input[type="text"] {
         padding: var(--space-md);
         font-size: 1rem;
     }
-    
+
     /* Media info overlay adjustments */
     .media-info-overlay {
         padding: var(--space-sm) var(--space-md);
     }
-    
+
     .media-info-overlay .filename {
         font-size: 0.9rem;
     }
-    
+
     .media-info-overlay .metadata {
         font-size: 0.75rem;
         gap: var(--space-sm);
     }
-    
-    /* Category header adjustments */
-    .category-header {
-        margin-bottom: var(--space-md);
-        padding-bottom: var(--space-sm);
-        margin-top: var(--space-md);
-        display: flex !important;
+
+    .play-icon-overlay {
+        width: 72px;
+        height: 72px;
     }
-    
-    .category-header h2 {
-        font-size: 1.4rem;
+
+    .play-icon-overlay::before {
+        border-top-width: 13px;
+        border-bottom-width: 13px;
+        border-left-width: 21px;
     }
-    
-    .add-category-btn {
-        padding: var(--space-xs) var(--space-md);
-        font-size: 0.9rem;
+
+    .vc-thumb-label {
+        max-width: 72%;
+        font-size: 0.78rem;
+        padding: 6px 10px;
+    }
+
+
+
+    /* Filter bar mobile */
+    .category-filter-bar {
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
+
+    .filter-buttons {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .category-filter-meta {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .category-filter-btn {
+        padding: var(--space-xs) var(--space-sm);
+        font-size: 0.75rem;
+    }
+
+    .category-count {
+        font-size: 0.7rem;
+    }
+}
+
+@media (pointer: coarse) {
+    :focus-visible {
+        outline-width: 2px;
+        outline-offset: 2px;
+    }
+}
+
+/* Extra small screens (< 400px) */
+@media (max-width: 400px) {
+    :root {
+        --app-header-height: 40px;
+        --app-content-top: var(--app-header-height);
+        --app-page-padding-x: var(--space-sm);
+        --app-overlay-top-offset: calc(var(--app-header-height) + 4px);
+        --app-toolbar-height: 40px;
+        --app-toolbar-padding-y: var(--space-xs);
+        --app-toolbar-padding-x: var(--space-sm);
+        --app-section-padding-x: var(--space-sm);
+        --app-modal-padding: var(--space-md);
+        --app-touch-target-size: 40px;
+        --app-touch-target-size-lg: 40px;
+        --app-back-button-size: 36px;
+    }
+
+    .gh-header {
+        padding: 0 2px;
+        height: var(--app-header-height);
+    }
+
+    .gh-header__title {
+        font-size: 0.75rem;
+    }
+
+    .gh-header__logo {
+        height: 18px;
+        width: 18px;
+    }
+
+    .sync-status-display {
+        display: none;
+    }
+
+    .gh-header__btn {
+        width: var(--app-touch-target-size);
+        height: var(--app-touch-target-size);
+    }
+
+    .gh-header__btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .gh-header__sync-btn {
+        padding: 0 10px;
+        font-size: 0.65rem;
+        height: 30px;
+    }
+
+    button {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+
+    .btn-small {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+    }
+
+    .gh-back-btn {
+        top: var(--app-overlay-top-offset);
+        width: var(--app-back-button-size);
+        height: var(--app-back-button-size);
+        font-size: 1rem;
     }
 }

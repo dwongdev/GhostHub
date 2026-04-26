@@ -1,0 +1,101 @@
+/* Pills */
+
+.pill,
+.category-filter-pill,
+.category-filter-btn,
+.streaming-filter-btn,
+.filter-pill-shared {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    min-width: 0;
+    width: auto;
+    height: var(--pill-height);
+    padding: 0 var(--pill-padding-x);
+    border-radius: var(--pill-radius);
+    border: 1px solid var(--pill-border);
+    background: var(--pill-bg);
+    color: var(--pill-fg);
+    font-size: var(--pill-font-size);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transition:
+        background var(--transition-fast) ease,
+        border-color var(--transition-fast) ease,
+        color var(--transition-fast) ease,
+        box-shadow var(--transition-fast) ease,
+        transform var(--transition-fast) ease;
+}
+
+.pill:hover,
+.category-filter-pill:hover,
+.category-filter-btn:hover,
+.streaming-filter-btn:hover {
+    background: var(--pill-hover-bg);
+    border-color: var(--pill-hover-border);
+    color: var(--pill-hover-fg);
+    box-shadow: var(--pill-hover-shadow);
+    transform: translateY(-1px);
+}
+
+.pill--active,
+.pill.active {
+    background: var(--pill-active-bg);
+    color: var(--pill-active-fg);
+    border-color: var(--pill-active-border);
+    box-shadow: var(--pill-active-shadow);
+}
+
+.pill--active:hover,
+.pill.active:hover {
+    background: var(--pill-active-bg);
+    color: var(--pill-active-fg);
+    border-color: var(--pill-active-border);
+    box-shadow: 0 8px 18px rgba(var(--accent-color-rgb), 0.34);
+}
+
+.pill:active,
+.category-filter-pill:active,
+.category-filter-btn:active,
+.streaming-filter-btn:active {
+    transform: scale(0.96);
+}
+
+.pill--filter,
+.category-filter-btn,
+.streaming-filter-btn {
+    cursor: pointer;
+}
+
+.pill--breadcrumb,
+.category-filter-pill {
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pill--sm,
+.filter-pill-shared {
+    --pill-height: 24px;
+    --pill-padding-x: 10px;
+    --pill-font-size: 0.7rem;
+}
+
+.pill__parent {
+    opacity: 0.7;
+    font-weight: 500;
+}
+
+.pill__sep {
+    opacity: 0.5;
+    display: inline-flex;
+    align-items: center;
+}
+
+.pill__label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

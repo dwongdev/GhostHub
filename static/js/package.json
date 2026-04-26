@@ -1,0 +1,24 @@
+{
+  "name": "ghosthub-js-tests",
+  "version": "1.0.0",
+  "description": "Unit tests for GhostHub JavaScript modules",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "build": "npm run minify-css && npm run minify-js",
+    "minify-css": "cleancss -o dist/css.min.css ../css/*.css",
+    "minify-js": "terser ../main.js -o dist/js.min.js --compress --mangle",
+    "build-prod": "npm run build && echo 'Production files ready in dist/'"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.0",
+    "@vitest/ui": "^2.1.0",
+    "jsdom": "^25.0.0",
+    "vitest": "^2.1.0",
+    "clean-css-cli": "^5.0.0",
+    "terser": "^5.19.0"
+  }
+}

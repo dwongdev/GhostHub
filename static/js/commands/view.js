@@ -1,38 +1,38 @@
 /**
  * View Command Module
- * Handles the /view {session_id} command which allows a user to jump to another user's shared view.
+ * Handles the /view {name_or_id} command which allows a user to jump to another user's shared view.
+ * Accepts a profile name, session ID, or session ID prefix.
  */
 
-import { app } from '../core/app.js';
 import { ensureFeatureAccess } from '../utils/authManager.js';
+import { SOCKET_EVENTS } from '../core/socketEvents.js';
 
 // Define the functions first
 async function executeView(socket, displayLocalMessage, arg) {
   const accessGranted = await ensureFeatureAccess();
   if (!accessGranted) {
-    displayLocalMessage('Password validation required to use /view. Please try again after validating.');
-    console.log('Access to /view command denied by password protection.');
+    displayLocalMessage('Password required.', { icon: 'stop' });
     return;
   }
 
-  const targetSessionId = arg ? arg.trim() : null;
+  const target = arg ? arg.trim() : null;
 
-  if (!targetSessionId) {
-    displayLocalMessage('Usage: /view {session_id}');
+  if (!target) {
+    displayLocalMessage('Specify a profile name or session ID.', { icon: 'lightbulb' });
     return;
   }
 
-  socket.emit('request_view_info', { target_session_id: targetSessionId });
-  displayLocalMessage(`Requesting view for session ${targetSessionId}...`);
+  socket.emit(SOCKET_EVENTS.REQUEST_VIEW_INFO, { target_session_id: target });
+  displayLocalMessage(`Viewing ${target}.`, { icon: 'eye' });
 }
 
 function getViewHelpText() {
-  return '• /view {session_id}  Jump to another user\'s shared view (password protected)';
+  return '• /view {name or id}  Jump to another user\'s shared view (password protected)';
 }
 
 // Export the command object
 export const view = {
-    description: "Jump to another user's shared view using their session ID.",
-    execute: executeView,
-    getHelpText: getViewHelpText
+  description: "Jump to another user's shared view using their profile name or session ID.",
+  execute: executeView,
+  getHelpText: getViewHelpText
 };

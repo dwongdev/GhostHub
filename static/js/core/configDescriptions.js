@@ -1,59 +1,232 @@
 /**
  * Configuration Descriptions
  * Provides descriptive text for each configuration setting.
+ *
+ * Format: {
+ *   description: "User-facing description text",
+ *   level: "basic" | "advanced"  // Determines visibility in Basic/Advanced mode
+ * }
+ *
+ * Basic: Settings that casual users need (UI, security, basic media)
+ * Advanced: Technical settings (performance tuning, rate limits, reconnection logic)
  */
 
 export const CONFIG_DESCRIPTIONS = {
-    // Python Config
-    "python_config.CACHE_EXPIRY": "Cache Expiry (seconds): How long server-side caches for things like media lists will be stored before being refreshed. Default: 300.",
-    "python_config.DEFAULT_PAGE_SIZE": "Default Page Size: Number of items the server returns per page for paginated data (e.g., media files). Default: 10.",
-    "python_config.SESSION_EXPIRY": "Session Expiry (seconds): How long a user's session remains active. Default: 3600 (1 hour).",
-    "python_config.SHUFFLE_MEDIA": "Shuffle Media (boolean): If true, media items within a category are shuffled by default. Sync mode overrides this to false. Default: true.",
-    "python_config.WS_RECONNECT_ATTEMPTS": "WebSocket Reconnect Attempts (Server): Max attempts server-side components might try to reconnect (if applicable, primarily a guide). Default: 10.",
-    "python_config.WS_RECONNECT_DELAY": "WebSocket Reconnect Delay (ms, Server): Initial delay before server-side components attempt WebSocket reconnection. Default: 1000.",
-    "python_config.WS_RECONNECT_FACTOR": "WebSocket Reconnect Factor (Server): Multiplier for WebSocket reconnection delay increase after each failed attempt. Default: 1.5.",
-    "python_config.MEMORY_CLEANUP_INTERVAL": "Memory Cleanup Interval (ms, Server): How often the server performs certain memory cleanup tasks. Default: 60000.",
-    "python_config.MAX_CACHE_SIZE": "Max Cache Size (Server/Client): Maximum number of items for certain server-side caches. This value is also passed to the client to guide its media element cache size. Default: 50.",
-    "python_config.SAVE_CURRENT_INDEX": "Save Current Index (boolean): If true, the application will remember the last viewed item in each category. Default: false.",
-    "python_config.SESSION_PASSWORD": "Session Password: Set a password to protect access to categories. Leave blank to disable. Takes effect immediately.",
-    
-    // GhostStream Settings
-    "python_config.GHOSTSTREAM_ENABLED": "GhostStream Enabled: Enable GhostStream integration for external GPU transcoding. Requires a GhostStream server running on your network.",
-    "python_config.GHOSTSTREAM_SERVER": "GhostStream Server: Server address (e.g., '192.168.4.2:8765'). Leave empty for automatic mDNS discovery.",
-    "python_config.GHOSTSTREAM_AUTO_TRANSCODE": "Auto Transcode: Automatically transcode incompatible video formats (MKV, AVI, HEVC, etc.) for browser playback.",
-    "python_config.GHOSTSTREAM_DEFAULT_RESOLUTION": "Default Resolution: Target resolution for transcoding (4k, 1080p, 720p, 480p, original). Default: 1080p.",
-    "python_config.GHOSTSTREAM_DEFAULT_CODEC": "Default Codec: Video codec for transcoding (h264, h265, vp9). H.264 has best compatibility. Default: h264.",
-    "python_config.GHOSTSTREAM_PREFER_ABR": "Prefer ABR: Use Adaptive Bitrate streaming (multiple quality variants) instead of single-quality HLS. Better for variable networks.",
+    // Python Config - Advanced (Performance & Technical)
+    "python_config.CACHE_EXPIRY": {
+        description: "Automatic Refresher: How often the server updates its internal lists of your media. A shorter time shows new files faster, while a longer time saves resources. Default: 300 seconds.",
+        level: "advanced"
+    },
+    "python_config.DEFAULT_PAGE_SIZE": {
+        description: "Loading Speed: How many items are loaded at once when you browse. Smaller numbers load faster, while larger numbers show more items per page. Default: 10.",
+        level: "advanced"
+    },
+    "python_config.SESSION_EXPIRY": {
+        description: "Login Lifetime: How long you stay logged in before needing to re-authenticate. Default is effectively permanent (1 year).",
+        level: "advanced"
+    },
 
-    // JavaScript Config - main
-    "javascript_config.main.socket_reconnectionAttempts": "Main Socket Reconnect Attempts (Client): Max reconnection attempts for the primary client-side WebSocket (used for chat/general events). Default: 5.",
-    "javascript_config.main.socket_reconnectionDelay": "Main Socket Reconnect Delay (ms, Client): Initial delay for primary client WebSocket reconnection. Default: 2000.",
-    "javascript_config.main.phase2_init_delay": "Phase 2 Init Delay (ms, Client): Delay before secondary application components are initialized. Default: 250.",
-    "javascript_config.main.phase3_init_delay": "Phase 3 Init Delay (ms, Client): Delay before non-critical features (like chat) are initialized. Default: 500.",
+    // Python Config - Basic (Media & Playback)
+    "python_config.SHUFFLE_MEDIA": {
+        description: "Random Play: Automatically mix up the order of videos when you browse a category. Great for music or clip collections. Default: Off.",
+        level: "basic"
+    },
+    "python_config.SAVE_VIDEO_PROGRESS": {
+        description: "Remember My Place: Automatically save exactly where you left off in every video. Resume from any device and never lose your spot. Default: On.",
+        level: "basic"
+    },
+    "python_config.SAVE_PROGRESS_FOR_HIDDEN_FILES": {
+        description: "Hidden File Progress: Save watch progress for files marked as hidden. Turn this off if you don't want hidden content to appear in 'Continue Watching'. Default: On.",
+        level: "basic"
+    },
+    "python_config.ENABLE_SUBTITLES": {
+        description: "Subtitle Support: Automatically detect and show captions for your videos. Works with internal tracks and external .srt or .vtt files. Default: On.",
+        level: "basic"
+    },
+    "python_config.ENABLE_TV_SORTING": {
+        description: "TV Episode Sorting: Automatically detect seasons/episodes and keep TV shows (and anime) in the correct order. Default: On.",
+        level: "basic"
+    },
+    "python_config.VIDEO_END_BEHAVIOR": {
+        description: "End of Video Action: What should happen when a video finishes? Choose 'Stop', 'Loop' to repeat, or 'Play Next' to start the next one automatically.",
+        level: "basic"
+    },
 
-    // JavaScript Config - core_app
-    "javascript_config.core_app.media_per_page_desktop": "Media Per Page (Desktop, Client): Number of media items loaded at once when scrolling on desktop. Default: 5.",
-    "javascript_config.core_app.media_per_page_mobile": "Media Per Page (Mobile, Client): Number of media items loaded at once when scrolling on mobile. Default: 3.",
-    "javascript_config.core_app.load_more_threshold_desktop": "Load More Threshold (Desktop, Client): How many items from the end of the list to trigger loading more media on desktop. Default: 3.",
-    "javascript_config.core_app.load_more_threshold_mobile": "Load More Threshold (Mobile, Client): How many items from the end of the list to trigger loading more media on mobile. Default: 2.",
-    "javascript_config.core_app.render_window_size": "Render Window Size (Client): Number of off-screen media items to pre-render (0 means only the current item). Affects performance and memory. Default: 0.",
-    "javascript_config.core_app.mobile_cleanup_interval": "Mobile Cleanup Interval (ms, Client): How often aggressive memory cleanup tasks run on mobile devices. Default: 60000.",
-    "javascript_config.core_app.mobile_fetch_timeout": "Mobile Fetch Timeout (ms, Client): Timeout for media fetch operations on mobile devices. Default: 15000.",
-    "javascript_config.core_app.fullscreen_check_interval": "Fullscreen Check Interval (ms, Client): How often to check and ensure fullscreen buttons are available on mobile. Default: 2000.",
+    // Python Config - Basic (Security)
+    "python_config.SESSION_PASSWORD": {
+        description: "Privacy Mode: Set a password to protect your categories from unauthorized access. Leave blank if you want it open for everyone.",
+        level: "basic"
+    },
+    "python_config.ADMIN_PASSWORD": {
+        description: "Master Password: The admin password used to unlock restricted settings and take control of the server. Default: admin.",
+        level: "basic"
+    },
 
-    // JavaScript Config - sync_manager
-    "javascript_config.sync_manager.socket_reconnectionAttempts": "Sync Socket Reconnect Attempts (Client): Max reconnection attempts for the Socket.IO client in sync mode. Default: 10.",
-    "javascript_config.sync_manager.socket_reconnectionDelay": "Sync Socket Reconnect Delay (ms, Client): Initial delay for Socket.IO client reconnection in sync mode. Default: 1000.",
-    "javascript_config.sync_manager.socket_reconnectionDelayMax": "Sync Socket Max Reconnect Delay (ms, Client): Maximum delay for Socket.IO client reconnection in sync mode. Default: 5000.",
-    "javascript_config.sync_manager.socket_timeout": "Sync Socket Connection Timeout (ms, Client): Timeout for initial Socket.IO connection in sync mode. Default: 20000.",
-    "javascript_config.sync_manager.socket_pingTimeout": "Sync Socket Ping Timeout (ms, Client): How long the client waits for a pong packet before closing the connection in sync mode. Default: 120000.",
-    "javascript_config.sync_manager.socket_pingInterval": "Sync Socket Ping Interval (ms, Client): How often the client sends a ping packet in sync mode. Default: 10000.",
-    "javascript_config.sync_manager.heartbeatInterval": "Sync Heartbeat Interval (ms, Client): How often the client sends a custom heartbeat event to the server in sync mode. Default: 30000.",
-    "javascript_config.sync_manager.manual_maxReconnectAttempts": "Sync Manual Max Reconnect Attempts (Client): Max attempts for the custom manual reconnection logic after Socket.IO fails. Default: 10.",
-    "javascript_config.sync_manager.manual_reconnectDelayBase": "Sync Manual Reconnect Base Delay (ms, Client): Base delay for custom manual reconnection logic. Default: 1000.",
-    "javascript_config.sync_manager.manual_reconnectFactor": "Sync Manual Reconnect Factor (Client): Multiplier for custom manual reconnection delay. Default: 1.5.",
-    "javascript_config.sync_manager.manual_reconnect_delay_max_mobile": "Sync Manual Max Reconnect Delay (Mobile, ms, Client): Max delay for custom manual reconnection on mobile. Default: 10000.",
-    "javascript_config.sync_manager.manual_reconnect_delay_max_desktop": "Sync Manual Max Reconnect Delay (Desktop, ms, Client): Max delay for custom manual reconnection on desktop. Default: 30000.",
-    "javascript_config.sync_manager.manual_reconnect_trigger_delay": "Sync Manual Reconnect Trigger Delay (ms, Client): Delay before attempting a manual reconnect after certain disconnect reasons. Default: 2000.",
-    "javascript_config.sync_manager.connect_error_force_ui_timeout": "Sync Connect Error UI Timeout (ms, Client): Timeout after several connection errors before forcing UI to become responsive. Default: 5000."
+    // Python Config - Advanced (WebSocket & Performance)
+    "python_config.WS_RECONNECT_ATTEMPTS": {
+        description: "Connection Recovery: How many times the app tries to fix a dropped connection automatically. Default: 10.",
+        level: "advanced"
+    },
+    "python_config.WS_RECONNECT_DELAY": {
+        description: "Recovery Wait Time: How long to wait before trying to reconnect after a network glitch. Default: 1000ms.",
+        level: "advanced"
+    },
+    "python_config.WS_RECONNECT_FACTOR": {
+        description: "Recovery Spacing: How much longer to wait between each retry attempt. Default: 1.5x.",
+        level: "advanced"
+    },
+    "python_config.MEMORY_CLEANUP_INTERVAL": {
+        description: "System Maintenance: How often the server performs deep cleaning of its temporary memory. Default: 60000ms.",
+        level: "advanced"
+    },
+    "python_config.MAX_CACHE_SIZE": {
+        description: "Memory Limit: The maximum number of items stored in quick-access memory for faster browsing. Default: 75.",
+        level: "advanced"
+    },
+    "python_config.MAX_CATEGORY_SCAN_DEPTH": {
+        description: "Folder Search Depth: How deep GhostHub looks through your folders to find media. Supports better organization but may slow down initial scanning. Default: 6.",
+        level: "advanced"
+    },
+
+    // Python Config - Advanced (Rate Limiting)
+    "python_config.UPLOAD_RATE_LIMIT_PER_CLIENT": {
+        description: "Upload Limit Per User: Maximum speed allowed for each person. Prevents one user from slowing down everyone else. Default: 50 Mbps.",
+        level: "advanced"
+    },
+    "python_config.UPLOAD_RATE_LIMIT_GLOBAL": {
+        description: "Total Upload Limit: Maximum combined speed for all users. Prevents overworking your network. Default: 100 Mbps.",
+        level: "advanced"
+    },
+    "python_config.DOWNLOAD_RATE_LIMIT_PER_CLIENT": {
+        description: "Download Limit Per User: Maximum data speed per user for non-streaming actions. Default: 50 Mbps.",
+        level: "advanced"
+    },
+    "python_config.DOWNLOAD_RATE_LIMIT_GLOBAL": {
+        description: "Total Download Limit: Maximum total speed allowed for the entire server to prevent performance issues. Default: 100 Mbps.",
+        level: "advanced"
+    },
+
+    // Python Config - Advanced (Admin UI Settings Mode)
+    "python_config.UI_SETTINGS_MODE": {
+        description: "Settings View: Choose 'basic' for essential controls or 'advanced' for deep technical tuning. Default: basic.",
+        level: "advanced"
+    },
+    "python_config.AUTO_OPTIMIZE_FOR_HARDWARE": {
+        description: "Hardware Intelligence: Automatically tune performance based on whether you have a 2GB, 4GB, or 8GB Raspberry Pi. Recommended. Default: On.",
+        level: "advanced"
+    },
+
+    // JavaScript Config - Advanced (Main - Reconnection)
+    "javascript_config.main.socket_reconnectionAttempts": {
+        description: "App Sync Retries: Max attempts for the main interface to stay synced with the server. Default: 5.",
+        level: "advanced"
+    },
+    "javascript_config.main.socket_reconnectionDelay": {
+        description: "App Sync Wait: Initial delay before trying to resync the interface. Default: 2000ms.",
+        level: "advanced"
+    },
+    "javascript_config.main.phase2_init_delay": {
+        description: "App Load Speed (P2): Delay before non-essential parts of the app start up. Default: 250ms.",
+        level: "advanced"
+    },
+    "javascript_config.main.phase3_init_delay": {
+        description: "App Load Speed (P3): Delay before background features like chat start up. Default: 500ms.",
+        level: "advanced"
+    },
+
+    // JavaScript Config - Advanced (Core App - Performance)
+    "javascript_config.core_app.media_per_page_desktop": {
+        description: "Items Per Row (Desktop): How many media items are loaded when you scroll on desktop. Default: 5.",
+        level: "advanced"
+    },
+    "javascript_config.core_app.media_per_page_mobile": {
+        description: "Items Per Row (Mobile): How many media items are loaded when you scroll on mobile. Default: 3.",
+        level: "advanced"
+    },
+    "javascript_config.core_app.load_more_threshold_desktop": {
+        description: "Infinite Scroll Limit (Desktop): How early to load the next page of items on desktop. Default: 3.",
+        level: "advanced"
+    },
+    "javascript_config.core_app.load_more_threshold_mobile": {
+        description: "Infinite Scroll Limit (Mobile): How early to load the next page of items on mobile. Default: 2.",
+        level: "advanced"
+    },
+    "javascript_config.core_app.render_window_size": {
+        description: "Visibility Window: How many off-screen items are kept 'ready' to show. Higher uses more memory. Default: 0.",
+        level: "advanced"
+    },
+    "javascript_config.core_app.mobile_cleanup_interval": {
+        description: "Mobile Memory Wash: How often to clear out old data to keep the mobile app running smooth. Default: 60000ms.",
+        level: "advanced"
+    },
+    "javascript_config.core_app.mobile_fetch_timeout": {
+        description: "Mobile Network Timeout: How long to wait for data on mobile before giving up. Default: 15000ms.",
+        level: "advanced"
+    },
+    "javascript_config.core_app.fullscreen_check_interval": {
+        description: "Mobile UI Polish: How often the app ensures controls are perfectly sized for mobile screens. Default: 2000ms.",
+        level: "advanced"
+    },
+
+    // JavaScript Config - Advanced (Sync Manager - Reconnection)
+    "javascript_config.sync_manager.socket_reconnectionAttempts": {
+        description: "Sync Mode Retries: Max attempts to keep your 'Watch Together' session active during drops. Default: 10.",
+        level: "advanced"
+    },
+    "javascript_config.sync_manager.socket_reconnectionDelay": {
+        description: "Sync Mode Recovery: Initial wait time to fix a sync issue. Default: 1000ms.",
+        level: "advanced"
+    },
+    "javascript_config.sync_manager.manual_maxReconnectAttempts": {
+        description: "Custom Sync Recovery: Extra attempts to fix sync when standard methods fail. Default: 10.",
+        level: "advanced"
+    },
+
+    // JavaScript Config - User Preferences
+    "javascript_config.ui.theme": {
+        description: "Personal Style: Choose your favorite color theme. Note: This can be changed individually per device.",
+        level: "basic"
+    },
+    "javascript_config.ui.layout": {
+        description: "Interface Mode: Netflix-style horizontal rows (Streaming) or photo-grid style browsing (Gallery).",
+        level: "basic"
+    },
+    "javascript_config.ui.features.chat": {
+        description: "Community Chat: Show or hide the sidebar for live watch-together chat. Default: On.",
+        level: "basic"
+    },
+    "javascript_config.ui.features.headerBranding": {
+        description: "GhostHub Logo: Show the branding and app title in the top bar. Default: On.",
+        level: "basic"
+    },
+    "javascript_config.ui.features.search": {
+        description: "Search Bar: Show the search icon to let people find movies instantly. Default: On.",
+        level: "basic"
+    },
+
+    // JavaScript Config - Basic (GhostStream Transcoding)
+    "javascript_config.ghoststream.preferTranscode": {
+        description: "Smart Streaming: Always optimize videos for your network instead of playing the large original file. Default: Off.",
+        level: "advanced"
+    },
+    "javascript_config.ghoststream.preferredQuality": {
+        description: "Favorite Picture Quality: Default resolution for optimized streaming (Original, 1080p, 720p, etc.). Default: Original.",
+        level: "basic"
+    },
+    "javascript_config.ghoststream.autoTranscodeFormats": {
+        description: "Universal Compatibility: Automatically fix videos that don't normally play in browsers (MKV, AVI, etc.). Default: On.",
+        level: "basic"
+    },
+    "javascript_config.ghoststream.maxBitrate": {
+        description: "Streaming Speed Limit: Cap the data usage for videos to save bandwidth. Default: Auto.",
+        level: "advanced"
+    },
+    "javascript_config.ghoststream.autoTranscodeHighBitrate": {
+        description: "High Quality Optimizer: Automatically smooth out very high-quality videos that might stutter. Default: On.",
+        level: "advanced"
+    },
+    "javascript_config.ghoststream.enableABR": {
+        description: "Adaptive Streaming: Automatically switch quality if your internet slows down, preventing buffering. Default: Off.",
+        level: "advanced"
+    }
 };

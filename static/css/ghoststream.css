@@ -1,0 +1,1333 @@
+/**
+ * GhostStream Transcoding UI Styles
+ * Plex-like quality selector and status indicators
+ */
+
+/* ============== QUALITY SELECTOR POPUP ============== */
+.ghoststream-quality-popup {
+    background: var(--bg-secondary, #1a1a2e);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    min-width: 280px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.gs-quality-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-tertiary, #252542);
+    border-bottom: 1px solid var(--border-color, #333);
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+}
+
+.gs-close-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #888);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.gs-close-btn:hover {
+    color: var(--text-primary, #fff);
+}
+
+.gs-quality-options {
+    padding: 8px 0;
+}
+
+.gs-quality-option {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+}
+
+.gs-quality-option:hover {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.05));
+}
+
+.gs-quality-option.selected {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.08));
+    border-left-color: var(--accent-color, #6366f1);
+}
+
+.gs-quality-option input[type="radio"] {
+    display: none;
+}
+
+.gs-quality-label {
+    font-weight: 500;
+    color: var(--text-primary, #fff);
+    font-size: 14px;
+}
+
+.gs-quality-desc {
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+    margin-top: 2px;
+}
+
+.gs-quality-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color, #333);
+    background: var(--bg-tertiary, #252542);
+}
+
+.gs-auto-transcode {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary, #aaa);
+    cursor: pointer;
+}
+
+.gs-auto-transcode input[type="checkbox"] {
+    accent-color: var(--accent-color, #6366f1);
+}
+
+/* ============== TRANSCODING INDICATOR ============== */
+.ghoststream-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px 32px;
+    background: rgba(0, 0, 0, 0.85);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    z-index: 100;
+}
+
+.gs-indicator-icon {
+    font-size: 32px;
+    animation: gs-pulse 1.5s ease-in-out infinite;
+}
+
+.gs-indicator-text {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.gs-indicator-progress {
+    color: var(--accent-color, #6366f1);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+@keyframes gs-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+/* ============== TRANSCODED VIDEO BADGE ============== */
+.ghoststream-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    z-index: 50;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+/* ============== TRANSCODE BUTTON (codec error fallback) ============== */
+.ghoststream-transcode-btn {
+    margin-top: 12px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ghoststream-transcode-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.ghoststream-transcode-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+/* ============== QUALITY BUTTON (for video controls) ============== */
+.ghoststream-quality-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.ghoststream-quality-btn:hover {
+    background: rgba(99, 102, 241, 0.8);
+}
+
+.ghoststream-quality-btn.active {
+    background: var(--accent-color, #6366f1);
+}
+
+/* ============== STATUS INDICATOR (header) - REMOVED ============== */
+/* Header indicator removed - all GhostStream settings are in the Settings modal */
+.ghoststream-status {
+    display: none !important;
+}
+
+/* ============== CONFIG POPUP ============== */
+.ghoststream-config-popup {
+    background: var(--bg-secondary, #1a1a2e);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    min-width: 320px;
+    max-width: 400px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.gs-config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--bg-tertiary, #252542);
+    border-bottom: 1px solid var(--border-color, #333);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary, #fff);
+}
+
+.gs-config-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg-tertiary, #252542);
+    border-bottom: 1px solid var(--border-color, #333);
+    font-size: 13px;
+    color: var(--text-secondary, #aaa);
+}
+
+.gs-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.gs-status-dot.online {
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.gs-status-dot.offline {
+    background: #6b7280;
+}
+
+.gs-config-section {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+.gs-config-section:last-child {
+    border-bottom: none;
+}
+
+.gs-config-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary, #888);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.gs-add-server {
+    display: flex;
+    gap: 8px;
+}
+
+.gs-input {
+    flex: 1;
+    padding: 10px 12px;
+    background: var(--bg-primary, #0f0f1a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    color: var(--text-primary, #fff);
+    font-size: 14px;
+}
+
+.gs-input:focus {
+    outline: none;
+    border-color: var(--accent-color, #6366f1);
+}
+
+.gs-input::placeholder {
+    color: var(--text-tertiary, #666);
+}
+
+.gs-btn-primary {
+    padding: 10px 16px;
+    background: var(--accent-color, #6366f1);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.gs-btn-primary:hover:not(:disabled) {
+    background: #5558e3;
+}
+
+.gs-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.gs-add-result {
+    margin-top: 8px;
+    font-size: 13px;
+    min-height: 20px;
+}
+
+.gs-add-result.success {
+    color: #10b981;
+}
+
+.gs-add-result.error {
+    color: #ef4444;
+}
+
+.gs-server-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gs-server-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--bg-primary, #0f0f1a);
+    border-radius: 6px;
+}
+
+.gs-server-name {
+    font-weight: 500;
+    color: var(--text-primary, #fff);
+    font-size: 13px;
+}
+
+.gs-server-addr {
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+    font-family: monospace;
+}
+
+.gs-quality-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.gs-quality-btn {
+    flex: 1;
+    padding: 10px 8px;
+    background: var(--bg-primary, #0f0f1a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    color: var(--text-secondary, #888);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gs-quality-btn:hover {
+    border-color: var(--accent-color, #6366f1);
+    color: var(--text-primary, #fff);
+}
+
+.gs-quality-btn.active {
+    background: var(--accent-color, #6366f1);
+    border-color: var(--accent-color, #6366f1);
+    color: #fff;
+}
+
+.gs-auto-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-secondary, #aaa);
+    cursor: pointer;
+}
+
+.gs-auto-option input[type="checkbox"] {
+    margin-top: 2px;
+    accent-color: var(--accent-color, #6366f1);
+}
+
+/* ============== SETTINGS MODAL STYLES ============== */
+
+/* Status dot - inline with text */
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-tertiary, #666);
+    margin-right: 6px;
+}
+
+.status-dot.online {
+    background: var(--success-color, #10b981);
+}
+
+.status-dot.offline {
+    background: var(--text-tertiary, #666);
+}
+
+.gs-server-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.gs-server-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--background-color-light);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.gs-server-item:hover {
+    background: var(--background-color-lighter, rgba(255, 255, 255, 0.05));
+}
+
+.gs-server-item.gs-server-unhealthy {
+    opacity: 0.5;
+    border-left: 3px solid var(--error-color, #ef4444);
+}
+
+.gs-server-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex: 1;
+}
+
+.gs-server-addr {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.gs-server-jobs {
+    padding: 2px 8px;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--accent-color, #6366f1);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.gs-load-balancer-info {
+    margin-top: var(--space-sm);
+    padding: var(--space-sm);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border-left: 3px solid var(--accent-color, #6366f1);
+    border-radius: var(--radius-sm);
+}
+
+.gs-lb-label {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.gs-lb-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.gs-badge {
+    padding: 2px 6px;
+    background: var(--accent-color);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.gs-empty {
+    padding: var(--space-md);
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+}
+
+.gs-add-row {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.gs-add-row .config-input {
+    flex: 1;
+}
+
+.gs-result {
+    margin-top: var(--space-xs);
+    font-size: 0.85rem;
+}
+
+.gs-result.success {
+    color: var(--success-color, #10b981);
+}
+
+.gs-result.error {
+    color: var(--error-color, #ef4444);
+}
+
+/* ============== PLAYBACK MODE INDICATOR ============== */
+.playback-mode-indicator {
+    position: absolute;
+    bottom: 60px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 4px;
+    font-size: 12px;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.viewer-media-item:hover .playback-mode-indicator,
+.ghoststream-video~.playback-mode-indicator {
+    opacity: 1;
+}
+
+.playback-mode-indicator.direct::before {
+    content: '▶';
+    color: #10b981;
+}
+
+.playback-mode-indicator.transcode::before {
+    content: '⚡';
+    color: #6366f1;
+}
+
+/* ============== TRANSCODING CONTAINER ============== */
+.ghoststream-transcode-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary, #0f0f1a);
+}
+
+.ghoststream-poster {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0.5;
+    filter: blur(2px);
+}
+
+.ghoststream-transcode-container .ghoststream-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    max-width: calc(100% - 24px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ghoststream-transcode-container .ghoststream-indicator {
+    position: relative;
+    transform: none;
+    top: auto;
+    left: auto;
+}
+
+/* ============== SETTINGS MODAL - MODERN UI ============== */
+
+.gs-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Status Card */
+.gs-status-card {
+    background: var(--bg-tertiary, #1e1e2e);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border-color, #333);
+}
+
+.gs-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.gs-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gs-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.gs-dot.online {
+    background: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.gs-dot.offline {
+    background: #6b7280;
+}
+
+.gs-dot.checking {
+    background: #f59e0b;
+    animation: gs-dot-pulse 1s infinite;
+}
+
+@keyframes gs-dot-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.gs-status-label {
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    font-size: 14px;
+}
+
+.gs-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--bg-secondary, #252542);
+    border: 1px solid var(--border-color, #444);
+    border-radius: 8px;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gs-icon-btn:hover {
+    background: var(--accent-color, #6366f1);
+    border-color: var(--accent-color, #6366f1);
+    color: #fff;
+}
+
+.gs-icon-btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.gs-icon-btn.spinning svg {
+    animation: gs-spin 0.5s linear infinite;
+}
+
+@keyframes gs-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.gs-server-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gs-server-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--bg-secondary, #1a1a2e);
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.gs-server-icon {
+    font-size: 16px;
+}
+
+.gs-server-addr {
+    font-family: 'SF Mono', Monaco, 'Consolas', monospace;
+    font-size: 13px;
+    color: var(--text-primary, #fff);
+}
+
+.gs-server-badge {
+    margin-left: auto;
+    padding: 2px 8px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.gs-no-servers {
+    color: var(--text-tertiary, #666);
+    font-size: 13px;
+    padding: 8px 0;
+}
+
+.gs-no-servers.gs-error {
+    color: var(--error-color, #ef4444);
+}
+
+/* Add Server */
+.gs-add-server {
+    background: var(--bg-tertiary, #1e1e2e);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border-color, #333);
+}
+
+.gs-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary, #888);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.gs-input-row {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 10px;
+    align-items: stretch;
+    width: 100%;
+}
+
+.gs-input,
+#gs-settings-server-input,
+input.gs-input[type="text"] {
+    flex: 1 1 auto !important;
+    min-width: 150px !important;
+    width: auto !important;
+    max-width: none !important;
+    padding: 12px 14px !important;
+    background: var(--bg-secondary, #1a1a2e) !important;
+    border: 1px solid var(--border-color, #444) !important;
+    border-radius: 8px !important;
+    color: var(--text-primary, #fff) !important;
+    font-size: 14px !important;
+    font-family: 'SF Mono', Monaco, 'Consolas', monospace !important;
+    transition: border-color 0.2s;
+    height: 44px !important;
+    line-height: 1.4 !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin: 0 !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+
+.gs-input:focus,
+#gs-settings-server-input:focus {
+    outline: none !important;
+    border-color: var(--accent-color, #6366f1) !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+
+.gs-input::placeholder,
+#gs-settings-server-input::placeholder {
+    color: var(--text-tertiary, #666) !important;
+    opacity: 1 !important;
+}
+
+.gs-btn-add {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 18px;
+    background: var(--accent-color, #6366f1);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.gs-btn-add:hover:not(:disabled) {
+    background: #5558e3;
+    transform: translateY(-1px);
+}
+
+.gs-btn-add:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.gs-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: gs-spin 0.6s linear infinite;
+}
+
+.gs-result {
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    min-height: 20px;
+}
+
+.gs-result.success {
+    color: #10b981;
+}
+
+.gs-result.error {
+    color: #ef4444;
+}
+
+/* Settings Group */
+.gs-settings-group {
+    background: var(--bg-tertiary, #1e1e2e);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border-color, #333);
+}
+
+/* Quality Grid */
+.gs-quality-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.gs-quality-option {
+    cursor: pointer;
+}
+
+.gs-quality-option input[type="radio"] {
+    display: none;
+}
+
+.gs-quality-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 8px;
+    background: var(--bg-secondary, #1a1a2e);
+    border: 2px solid var(--border-color, #444);
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.gs-quality-option input:checked+.gs-quality-card {
+    border-color: var(--accent-color, #6366f1);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.gs-quality-option:hover .gs-quality-card {
+    border-color: var(--accent-color, #6366f1);
+}
+
+.gs-quality-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-primary, #fff);
+    margin-bottom: 2px;
+}
+
+.gs-quality-desc {
+    font-size: 11px;
+    color: var(--text-tertiary, #666);
+}
+
+/* Toggle List */
+.gs-toggle-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gs-toggle-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    background: var(--bg-secondary, #1a1a2e);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.gs-toggle-item:hover {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.05));
+}
+
+.gs-toggle-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    margin-right: 16px;
+}
+
+.gs-toggle-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary, #fff);
+}
+
+.gs-toggle-desc {
+    font-size: 12px;
+    color: var(--text-tertiary, #666);
+}
+
+/* Modern Toggle Switch */
+
+/* ============== GHOSTHUB CONSISTENCY OVERRIDES ============== */
+
+.ghoststream-quality-popup,
+.ghoststream-config-popup,
+.gs-status-card,
+.gs-add-server,
+.gs-settings-group {
+    background: var(--gh-surface-glass-strong);
+    border: 1px solid var(--gh-border-soft);
+    box-shadow: var(--gh-shadow-float);
+    backdrop-filter: blur(18px) saturate(165%);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
+}
+
+.gs-quality-header,
+.gs-quality-footer,
+.gs-config-header,
+.gs-config-status {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--gh-border-soft);
+}
+
+.ghoststream-indicator,
+.playback-mode-indicator {
+    background: var(--gh-surface-glass-strong);
+    border: 1px solid var(--gh-border-soft);
+    border-radius: 14px;
+    box-shadow: var(--gh-shadow-float);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+
+.ghoststream-badge,
+.gs-server-badge,
+.gs-badge,
+.ghoststream-transcode-btn,
+.gs-btn-primary,
+.gs-btn-add {
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-color-light, var(--primary-color)) 100%);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ghoststream-transcode-btn,
+.gs-btn-primary,
+.gs-btn-add {
+    box-shadow: 0 10px 24px rgba(var(--accent-color-rgb), 0.24);
+}
+
+.ghoststream-transcode-btn:hover:not(:disabled),
+.gs-btn-primary:hover:not(:disabled),
+.gs-btn-add:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(var(--accent-color-rgb), 0.3);
+}
+
+.ghoststream-quality-btn,
+.gs-icon-btn,
+.gs-server-item,
+.gs-quality-btn,
+.gs-quality-card,
+.gs-toggle-item,
+.gs-load-balancer-info,
+.gs-input,
+#gs-settings-server-input,
+input.gs-input[type="text"] {
+    background: var(--gh-surface-glass);
+    border-color: var(--gh-border-soft);
+    color: var(--text-primary);
+}
+
+.ghoststream-quality-btn,
+.gs-icon-btn {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.ghoststream-quality-btn:hover,
+.gs-icon-btn:hover,
+.gs-quality-btn:hover,
+.gs-quality-option:hover .gs-quality-card,
+.gs-toggle-item:hover,
+.gs-server-item:hover {
+    background: rgba(var(--accent-color-rgb), 0.14);
+    border-color: var(--gh-border-strong);
+    color: var(--text-primary);
+}
+
+.ghoststream-quality-btn.active,
+.gs-quality-btn.active,
+.gs-quality-option input:checked + .gs-quality-card {
+    background: rgba(var(--accent-color-rgb), 0.18);
+    border-color: var(--gh-border-strong);
+    color: var(--text-primary);
+}
+
+.gs-server-jobs {
+    background: rgba(var(--accent-color-rgb), 0.16);
+    color: var(--accent-color);
+}
+
+.gs-load-balancer-info {
+    border-left-color: var(--accent-color);
+    background: rgba(var(--accent-color-rgb), 0.08);
+}
+
+.gs-input:focus,
+#gs-settings-server-input:focus,
+.ghoststream-quality-btn:focus-visible,
+.gs-btn-primary:focus-visible,
+.gs-btn-add:focus-visible,
+.gs-icon-btn:focus-visible,
+.gs-quality-btn:focus-visible,
+.gs-toggle-item:focus-visible {
+    outline: none;
+    box-shadow: var(--gh-focus-ring);
+}
+
+.gs-add-result.success,
+.gs-result.success {
+    color: var(--success-color);
+}
+
+.gs-add-result.error,
+.gs-result.error,
+.gs-no-servers.gs-error {
+    color: var(--error-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gs-icon-btn,
+    .gs-btn-primary,
+    .gs-btn-add,
+    .ghoststream-transcode-btn,
+    .gs-quality-card,
+    .gs-toggle-item,
+    .gs-dot.checking,
+    .gs-indicator-icon {
+        animation: none;
+        transition: none;
+    }
+}
+.gs-toggle {
+    appearance: none;
+    width: 44px;
+    height: 24px;
+    background: var(--bg-tertiary, #333);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.gs-toggle::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.gs-toggle:checked {
+    background: var(--accent-color, #6366f1);
+}
+
+.gs-toggle:checked::before {
+    transform: translateX(20px);
+}
+
+/* Section Icon */
+.section-icon {
+    margin-right: 8px;
+}
+
+/* ============== RESPONSIVE ============== */
+@media (max-width: 600px) {
+    .gs-quality-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .gs-input-row {
+        flex-direction: column !important;
+    }
+
+    .gs-btn-add {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .ghoststream-quality-popup {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        border-radius: 16px 16px 0 0;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    .ghoststream-badge {
+        top: 8px;
+        left: 8px;
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    .ghoststream-indicator {
+        padding: 20px 24px;
+    }
+}
+
+/* ============== BATCH TRANSCODING UI ============== */
+.gs-desc {
+    color: var(--text-secondary, #888);
+    font-size: 12px;
+    margin: 0 0 12px 0;
+}
+
+.gs-batch-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.gs-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-tertiary, #252542);
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.gs-filter-item:hover {
+    background: var(--bg-hover, #2a2a4a);
+}
+
+.gs-filter-item input[type="checkbox"] {
+    accent-color: var(--accent-color, #6366f1);
+}
+
+.gs-select {
+    background: var(--bg-tertiary, #252542);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    color: var(--text-primary, #fff);
+    padding: 10px 12px;
+    font-size: 14px;
+}
+
+.gs-select:focus {
+    outline: none;
+    border-color: var(--accent-color, #6366f1);
+}
+
+.gs-batch-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.gs-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gs-btn-primary {
+    background: var(--accent-color, #6366f1);
+    color: #fff;
+}
+
+.gs-btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover, #5558e3);
+}
+
+.gs-btn-danger {
+    background: #dc2626;
+    color: #fff;
+}
+
+.gs-btn-danger:hover:not(:disabled) {
+    background: #b91c1c;
+}
+
+.gs-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.gs-batch-status {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--bg-tertiary, #252542);
+    border-radius: 6px;
+}
+
+.gs-batch-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gs-batch-progress progress {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.gs-batch-progress progress::-webkit-progress-bar {
+    background: var(--bg-secondary, #1a1a2e);
+    border-radius: 4px;
+}
+
+.gs-batch-progress progress::-webkit-progress-value {
+    background: var(--accent-color, #6366f1);
+    border-radius: 4px;
+}
+
+@media (max-width: 480px) {
+    .gs-batch-buttons {
+        flex-direction: column;
+    }
+
+    .gs-batch-filters {
+        flex-direction: column;
+    }
+}

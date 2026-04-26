@@ -1,0 +1,456 @@
+/* Duplicate Warning Modal - Mobile-first responsive design */
+
+.duplicate-warning-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.duplicate-warning-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.duplicate-warning-content {
+    position: relative;
+    background: var(--gh-surface-glass-strong);
+    border: 1px solid var(--gh-border-soft);
+    border-radius: 12px;
+    box-shadow: var(--gh-shadow-float);
+    max-width: 500px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: duplicateModalSlideIn 0.3s ease;
+}
+
+@keyframes duplicateModalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.duplicate-warning-header {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color, #333);
+    align-items: flex-start;
+}
+
+.duplicate-warning-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 193, 7, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.duplicate-warning-icon svg {
+    width: 28px;
+    height: 28px;
+    color: #ffc107;
+}
+
+.duplicate-warning-title {
+    flex: 1;
+}
+
+.duplicate-warning-title h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+}
+
+.duplicate-warning-title p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #aaa);
+}
+
+.duplicate-warning-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--text-secondary, #aaa);
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.duplicate-warning-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary, #fff);
+}
+
+.duplicate-warning-close:focus-visible,
+.duplicate-warning-btn:focus-visible,
+.duplicate-file-name-static:focus-visible,
+.duplicate-rename-confirm-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--gh-focus-ring);
+}
+
+.duplicate-warning-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.duplicate-warning-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.duplicate-warning-item svg {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary, #aaa);
+}
+
+/* File name container - toggles between static and edit mode */
+.duplicate-file-name-container {
+    flex: 1;
+    min-width: 0;
+}
+
+.duplicate-file-name-static {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-primary, #fff);
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+    word-break: break-all;
+}
+
+.duplicate-file-name-static:hover {
+    background: rgba(74, 158, 255, 0.1);
+}
+
+.duplicate-file-name-static.hidden {
+    display: none;
+}
+
+/* Inline rename container */
+.duplicate-rename-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-secondary, #0f0f0f);
+    border: 1px solid var(--border-color, #444);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    transition: border-color 0.2s;
+}
+
+.duplicate-rename-container.hidden {
+    display: none;
+}
+
+.duplicate-rename-container:focus-within {
+    border-color: var(--accent-color, #4a9eff);
+}
+
+.duplicate-rename-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary, #fff);
+    font-size: 0.9rem;
+    font-family: 'Courier New', monospace;
+    padding: 0;
+    min-width: 0;
+}
+
+.duplicate-rename-input::placeholder {
+    color: var(--text-muted, #666);
+}
+
+.duplicate-file-ext {
+    flex-shrink: 0;
+    color: var(--text-secondary, #aaa);
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
+}
+
+.duplicate-rename-confirm-btn {
+    flex-shrink: 0;
+    background: var(--accent-color, #4a9eff);
+    border: none;
+    border-radius: 4px;
+    padding: 0.3rem 0.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.duplicate-rename-confirm-btn:hover {
+    background: var(--accent-hover, #3a8eef);
+    transform: scale(1.05);
+}
+
+.duplicate-rename-confirm-btn svg {
+    width: 14px;
+    height: 14px;
+    color: #fff;
+}
+
+.duplicate-warning-more {
+    text-align: center;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #aaa);
+    font-style: italic;
+}
+
+.duplicate-warning-footer {
+    padding: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.duplicate-warning-note {
+    margin: 0 0 1rem 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #aaa);
+    line-height: 1.5;
+}
+
+.duplicate-warning-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.duplicate-warning-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.duplicate-warning-skip {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary, #fff);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.duplicate-warning-skip:hover {
+    background: var(--bg-secondary, #333);
+    border-color: var(--border-hover, #555);
+}
+
+.duplicate-warning-rename {
+    background: linear-gradient(135deg, #4a9eff 0%, #3a7edf 100%);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(74, 158, 255, 0.3);
+}
+
+.duplicate-warning-rename:hover {
+    background: linear-gradient(135deg, #3a8eef 0%, #2a6ecf 100%);
+    box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
+    transform: translateY(-1px);
+}
+
+.duplicate-warning-upload {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary, #fff);
+    border: 1px solid var(--accent-color, #4a9eff);
+}
+
+.duplicate-warning-upload:hover {
+    background: rgba(74, 158, 255, 0.1);
+    border-color: var(--accent-hover, #3a8eef);
+}
+
+/* Duplicate Warning Badge (shows next to upload UI) */
+.duplicate-warning-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    background: rgba(255, 193, 7, 0.15);
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(255, 193, 7, 0);
+    }
+}
+
+.duplicate-warning-badge:hover {
+    background: rgba(255, 193, 7, 0.25);
+    transform: scale(1.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .duplicate-warning-content,
+    .duplicate-warning-badge {
+        animation: none;
+    }
+}
+
+.duplicate-warning-badge svg {
+    width: 18px;
+    height: 18px;
+    color: #ffc107;
+    flex-shrink: 0;
+}
+
+.duplicate-warning-badge span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #ffc107;
+}
+
+/* Mobile optimizations */
+@media (max-width: 600px) {
+    .duplicate-warning-modal {
+        padding: 0.5rem;
+    }
+
+    .duplicate-warning-content {
+        max-height: 90vh;
+        border-radius: 8px;
+    }
+
+    .duplicate-warning-header {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    .duplicate-warning-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .duplicate-warning-icon svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .duplicate-warning-title h3 {
+        font-size: 1rem;
+    }
+
+    .duplicate-warning-title p {
+        font-size: 0.85rem;
+    }
+
+    .duplicate-warning-list {
+        padding: 0.75rem 1rem;
+    }
+
+    .duplicate-warning-item {
+        padding: 0.6rem;
+        gap: 0.6rem;
+    }
+
+    .duplicate-warning-item span {
+        font-size: 0.85rem;
+    }
+
+    .duplicate-warning-footer {
+        padding: 1rem;
+    }
+
+    .duplicate-warning-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .duplicate-warning-btn {
+        width: 100%;
+        min-width: unset;
+        font-size: 0.85rem;
+        padding: 0.7rem 1rem;
+    }
+
+    .duplicate-rename-input {
+        font-size: 0.85rem;
+    }
+
+    .duplicate-file-ext {
+        font-size: 0.8rem;
+    }
+
+    .duplicate-warning-badge {
+        padding: 0.3rem 0.6rem;
+    }
+
+    .duplicate-warning-badge svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .duplicate-warning-badge span {
+        font-size: 0.8rem;
+    }
+}
+
+/* Tablet landscape */
+@media (min-width: 601px) and (max-width: 1024px) {
+    .duplicate-warning-content {
+        max-width: 600px;
+    }
+}

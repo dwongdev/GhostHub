@@ -1,0 +1,97 @@
+/* Forms */
+
+.gh-label,
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-xs);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.gh-input,
+.gh-select,
+.gh-textarea,
+.modal__body input[type="text"],
+.modal__body input[type="number"],
+.modal__body input[type="password"],
+.modal__body select,
+.modal__body textarea,
+.config-input-select,
+select {
+    width: 100%;
+    min-height: var(--input-height);
+    padding: var(--input-padding);
+    border-radius: var(--input-radius);
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--input-fg);
+    box-sizing: border-box;
+}
+
+.gh-select,
+.modal__body select,
+.config-input-select,
+select {
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    padding-right: 32px;
+}
+
+.gh-input:focus,
+.gh-select:focus,
+.gh-textarea:focus,
+.modal__body input[type="text"]:focus,
+.modal__body input[type="number"]:focus,
+.modal__body input[type="password"]:focus,
+.modal__body select:focus,
+.modal__body textarea:focus,
+.config-input-select:focus,
+select:focus {
+    border-color: var(--input-focus-border);
+    box-shadow: var(--gh-focus-ring);
+}
+
+.gh-textarea,
+.modal__body textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.gh-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-color);
+}
+
+.gh-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.modal__body .form-group {
+    margin-bottom: var(--space-md);
+}
+
+.modal__body h3 {
+    font-size: 1.1rem;
+    color: var(--accent-color-light);
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--divider-color-light);
+}
+
+.modal__body h3:first-child {
+    margin-top: 0;
+}
+

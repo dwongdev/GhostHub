@@ -4,6 +4,7 @@
  */
 
 import { getConfigValue } from './configManager.js';
+import { toast, dialog } from './notificationManager.js';
 
 let positiveValidationTimestamp = 0;
 const POSITIVE_VALIDATION_CACHE_DURATION = 2000; // Cache positive result for 2 seconds
@@ -27,7 +28,7 @@ export async function ensureFeatureAccess() {
 
     if (appRequiresPassword && !sessionPasswordValidated) {
         // console.log('[ensureFeatureAccess] Conditions met to prompt for password.');
-        const enteredPassword = prompt("This feature is password protected. Please enter the password:");
+        const enteredPassword = await dialog.prompt('This feature is password protected. Please enter the password:', { placeholder: 'Password...' });
         
         if (enteredPassword === null) { // User cancelled prompt
             // console.log('[ensureFeatureAccess] Password prompt cancelled by user.');
@@ -48,14 +49,14 @@ export async function ensureFeatureAccess() {
                 // console.log('[ensureFeatureAccess] Password valid. sessionStorage set. In-memory cache updated.');
                 return true; // Access granted
             } else {
-                alert(data.message || 'Incorrect password.');
+                toast.error(data.message || 'Incorrect password.');
                 // console.log('[ensureFeatureAccess] Password invalid.');
                 // Do not update positiveValidationTimestamp on failure, let it expire or be overwritten by success.
                 return false; // Access denied
             }
         } catch (error) {
             console.error('[ensureFeatureAccess] Password validation API error:', error);
-            alert('Error validating password. Please try again.');
+            toast.error('Error validating password. Please try again.');
             return false; // Access denied due to error
         }
     } else {

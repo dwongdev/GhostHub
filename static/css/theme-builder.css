@@ -1,0 +1,1202 @@
+/* Theme Builder - Procreate-style Edge Controls */
+/* All controls around the edges, main app shrunk in center */
+
+:root {
+    --theme-builder-app-scale: 0.92;
+    --theme-builder-app-translate-y: 0px;
+    --theme-builder-app-inset-x: clamp(16px, 4vw, 40px);
+    --theme-builder-app-inset-y: clamp(12px, 3vh, 28px);
+}
+
+.gh-theme-builder {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    pointer-events: none;
+}
+
+.gh-theme-builder.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Preview mode overlay is invisible - falls back to base CSS */
+/* No special rules needed - overlay will be opacity: 0, visibility: hidden */
+/* Preview button made visible explicitly below */
+
+.gh-theme-builder.preview-mode .gh-theme-builder__preview-btn {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+/* ===== CLICK BLOCKER (Prevents app interaction in edit mode) ===== */
+.gh-theme-builder__backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: -1;
+    cursor: pointer;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    pointer-events: auto;
+}
+
+/* Tooltip for backdrop */
+.gh-theme-builder__backdrop::after {
+    content: 'Click to preview theme';
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.gh-theme-builder__backdrop:hover::after {
+    opacity: 1;
+}
+
+/* In preview mode, allow the overlay container to exist so children like the preview button can be seen */
+.gh-theme-builder.preview-mode {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: none;
+}
+
+/* COMPLETELY HIDE backdrop in preview mode to allow app interaction */
+/* COMPLETELY HIDE backdrop in preview mode to allow app interaction */
+.gh-theme-builder.preview-mode .gh-theme-builder__backdrop {
+    display: none !important;
+}
+
+html.theme-builder-edit,
+body.theme-builder-active {
+    overflow: hidden;
+}
+
+body.theme-builder-active > :not(.gh-theme-builder):not(main):not(#streaming-container):not(#gallery-container):not(.gh-header):not(.gh-search):not(.chat-container) {
+    transform: scale(var(--theme-builder-app-scale)) translateY(var(--theme-builder-app-translate-y));
+    border-radius: var(--app-surface-radius);
+    overflow: clip;
+    transform-origin: center center;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The real scroll shells need to stay untransformed or edit mode shows a stale
+   top-of-page frame. Shrink them by box geometry instead of compositor scale. */
+body.theme-builder-active > main,
+body.theme-builder-active > #streaming-container,
+body.theme-builder-active > #gallery-container {
+    transform: none;
+    border-radius: var(--app-surface-radius);
+    overflow: hidden;
+    transition:
+        top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        right 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.theme-builder-active > main {
+    margin: var(--space-md) var(--theme-builder-app-inset-x) var(--theme-builder-app-inset-y);
+}
+
+body.theme-builder-active > #streaming-container,
+body.theme-builder-active > #gallery-container {
+    top: calc(var(--app-content-top) + var(--theme-builder-app-inset-y) + var(--space-md));
+    right: var(--theme-builder-app-inset-x);
+    bottom: var(--theme-builder-app-inset-y);
+    left: var(--theme-builder-app-inset-x);
+    height: auto;
+    max-height: none;
+}
+
+body.theme-builder-active > .gh-header {
+    transform: none;
+    top: var(--theme-builder-app-inset-y);
+    left: var(--theme-builder-app-inset-x);
+    right: var(--theme-builder-app-inset-x);
+    width: auto;
+    border-radius: var(--app-surface-radius);
+    overflow: hidden;
+}
+
+body.theme-builder-active > .gh-search {
+    transform: none;
+    left: var(--theme-builder-app-inset-x);
+    right: var(--theme-builder-app-inset-x);
+    width: auto;
+}
+
+body.theme-builder-active > .chat-container {
+    transform: none;
+}
+
+/* Preview mode: body stays at its natural height/overflow.
+   The app uses inner scroll containers (body is height:100vh overflow:hidden flex).
+   No body/html overrides needed — the overlay is pointer-events:none so the
+   app is fully interactive without touching the scroll context. */
+
+/* ===== FLOATING THEME ICON (Preview Mode) - HIDDEN ===== */
+/* This is no longer used - preview button moves to bottom right instead */
+.gh-theme-builder__floating-btn {
+    display: none;
+}
+
+/* Hide all other controls in preview mode EXCEPT preview button */
+.gh-theme-builder.preview-mode .gh-theme-builder__name-panel,
+.gh-theme-builder.preview-mode .gh-theme-builder__swatches,
+.gh-theme-builder.preview-mode .gh-theme-builder__actions,
+.gh-theme-builder.preview-mode .gh-theme-builder__format,
+.gh-theme-builder.preview-mode .gh-theme-builder__panel-toggles,
+.gh-theme-builder.preview-mode .gh-theme-builder__side-panel {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* In preview mode, hide entire save-cancel panel (save and cancel buttons) */
+.gh-theme-builder.preview-mode .gh-theme-builder__save-panel {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* In preview mode, keep preview button visible and make it circular */
+.gh-theme-builder.preview-mode .gh-theme-builder__preview-btn {
+    transform: translateY(0);
+    opacity: 1;
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(255, 255, 255, 0.1);
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    border-radius: 50%;
+    padding: 0 !important;
+    justify-content: center;
+}
+
+.gh-theme-builder.preview-mode .gh-theme-builder__preview-btn .gh-theme-builder__preview-label {
+    display: none !important;
+}
+
+.gh-theme-builder.preview-mode .gh-theme-builder__preview-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 0 2px var(--accent-color);
+}
+
+.gh-theme-builder.preview-mode .gh-theme-builder__preview-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* ===== TOP LEFT - Theme Name ===== */
+.gh-theme-builder__name-panel {
+    position: fixed;
+    top: var(--app-overlay-top-offset);
+    left: var(--app-page-padding-x);
+    background: var(--gh-surface-glass-strong);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 12px;
+    padding: 8px 12px;
+    box-shadow: var(--gh-shadow-float);
+    transform: translateY(-100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gh-theme-builder.active .gh-theme-builder__name-panel {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.gh-theme-builder__name-input {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--gh-border-soft);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 500;
+    min-width: 180px;
+}
+
+.gh-theme-builder__name-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: var(--gh-focus-ring);
+}
+
+.gh-theme-builder__name-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* ===== LEFT SIDE - Color Swatches (Vertical) ===== */
+.gh-theme-builder__swatches {
+    position: fixed;
+    left: var(--app-page-padding-x);
+    top: 50%;
+    transform: translateY(-50%) translateX(-100px);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gh-theme-builder.active .gh-theme-builder__swatches {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+    transition-delay: 0.1s;
+}
+
+.gh-theme-builder__swatch {
+    position: relative;
+    width: 44px;
+    height: 44px;
+}
+
+.gh-theme-builder__swatch-preview {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.gh-theme-builder__swatch-preview:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    border-color: var(--accent-color);
+}
+
+.gh-theme-builder__swatch-preview input[type="color"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    min-height: 0;
+    min-width: 0;
+}
+
+/* Tooltip on hover - appears to the right */
+.gh-theme-builder__swatch-label {
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.gh-theme-builder__swatch-label::before {
+    content: '';
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-right-color: rgba(0, 0, 0, 0.95);
+}
+
+.gh-theme-builder__swatch:hover .gh-theme-builder__swatch-label {
+    opacity: 1;
+}
+
+/* ===== RIGHT SIDE - Quick Actions (Vertical) ===== */
+.gh-theme-builder__actions {
+    position: fixed;
+    right: var(--app-page-padding-x);
+    top: 50%;
+    transform: translateY(-50%) translateX(100px);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: visible;
+    /* Allow harmony badge to show above buttons */
+}
+
+.gh-theme-builder.active .gh-theme-builder__actions {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1;
+    transition-delay: 0.15s;
+}
+
+.gh-theme-builder__action-btn {
+    width: 40px;
+    height: 40px;
+    background: var(--gh-surface-glass-strong);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 10px;
+    border: 1px solid var(--gh-border-soft);
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: var(--gh-shadow-float);
+    transition: all 0.2s;
+    overflow: visible;
+    /* Allow harmony badge to show above button */
+    z-index: 1;
+    /* Ensure button and badge are above other elements */
+}
+
+.gh-theme-builder__action-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-color);
+    transform: scale(1.05);
+    box-shadow: var(--gh-shadow-float);
+}
+
+.gh-theme-builder__action-btn:focus-visible,
+.gh-theme-builder__name-input:focus-visible,
+.gh-theme-builder__swatch-preview:focus-visible {
+    outline: none;
+    box-shadow: var(--gh-focus-ring);
+}
+
+.gh-theme-builder__action-btn svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+/* Tooltip for action buttons - appears to the left */
+.gh-theme-builder__action-label {
+    position: absolute;
+    right: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.gh-theme-builder__action-label::before {
+    content: '';
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-left-color: rgba(0, 0, 0, 0.95);
+}
+
+.gh-theme-builder__action-btn:hover .gh-theme-builder__action-label {
+    opacity: 1;
+}
+
+/* Harmony badge - appears as notification above Random button */
+.gh-theme-builder__harmony-badge {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(10px) scale(0.9);
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    text-transform: capitalize;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* Downward arrow pointer for harmony badge */
+.gh-theme-builder__harmony-badge::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--accent-color);
+}
+
+.gh-theme-builder__harmony-badge.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+}
+
+/* ===== BOTTOM LEFT - Format Toggle ===== */
+.gh-theme-builder__format {
+    position: fixed;
+    bottom: 16px;
+    left: var(--app-page-padding-x);
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gh-theme-builder.active .gh-theme-builder__format {
+    transform: translateY(0);
+    opacity: 1;
+    transition-delay: 0.2s;
+}
+
+.gh-theme-builder__format-toggle {
+    display: flex;
+    gap: 2px;
+}
+
+.gh-theme-builder__format-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+}
+
+.gh-theme-builder__format-btn.active {
+    background: var(--accent-color);
+    color: white;
+}
+
+.gh-theme-builder__format-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ===== BOTTOM CENTER - Preset/Saved Toggle ===== */
+.gh-theme-builder__panel-toggles {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: visible;
+}
+
+.gh-theme-builder.active .gh-theme-builder__panel-toggles {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    transition-delay: 0.25s;
+}
+
+.gh-theme-builder__panel-toggle {
+    padding: 10px 16px;
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.gh-theme-builder__panel-toggle:hover,
+.gh-theme-builder__panel-toggle.active {
+    background: rgba(40, 40, 40, 0.95);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+.gh-theme-builder__panel-toggle svg {
+    width: 14px;
+    height: 14px;
+}
+
+#toggle-saved {
+    position: relative;
+    font-size: 0;
+    padding: 10px;
+    min-width: 44px;
+    min-height: 44px;
+    overflow: visible;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#toggle-saved svg {
+    width: 18px;
+    height: 18px;
+}
+
+#saved-count-inline {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--accent-color);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+}
+
+/* ===== TOP RIGHT - Save & Cancel, BOTTOM RIGHT - Preview ===== */
+.gh-theme-builder__save-panel {
+    position: fixed;
+    top: var(--app-overlay-top-offset);
+    right: var(--app-page-padding-x);
+    display: flex;
+    gap: 8px;
+    transform: translateY(-100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gh-theme-builder.active .gh-theme-builder__save-panel {
+    transform: translateY(0);
+    opacity: 1;
+    transition-delay: 0.12s;
+}
+
+/* Move ONLY preview button to bottom right */
+.gh-theme-builder__preview-btn {
+    position: fixed;
+    bottom: 20px;
+    right: var(--app-page-padding-x);
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    transform: translateY(100px);
+    opacity: 0;
+    transition-delay: 0.12s;
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    color: rgba(255, 255, 255, 0.9);
+    justify-content: center;
+    width: auto;
+}
+
+.gh-theme-builder.active .gh-theme-builder__preview-btn {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.gh-theme-builder__save-btn,
+.gh-theme-builder__cancel-btn {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.gh-theme-builder__cancel-btn {
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.7);
+    justify-content: center;
+}
+
+.gh-theme-builder__cancel-btn:hover {
+    background: rgba(40, 40, 40, 0.95);
+    color: white;
+}
+
+.gh-theme-builder__preview-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    transform: translateY(0) scale(1.02);
+}
+
+/* Hide text on mobile, show only icon */
+.gh-theme-builder__preview-btn .gh-theme-builder__preview-label {
+    display: inline;
+}
+
+@media (max-width: 768px) {
+    .gh-theme-builder__preview-btn .gh-theme-builder__preview-label {
+        display: none;
+    }
+}
+
+.gh-theme-builder__save-btn {
+    background: var(--accent-color);
+    color: white;
+    justify-content: center;
+}
+
+.gh-theme-builder__save-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(var(--accent-color-rgb), 0.4);
+}
+
+.gh-theme-builder__save-btn svg,
+.gh-theme-builder__cancel-btn svg,
+.gh-theme-builder__preview-btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* ===== FLOATING SIDE PANELS (Presets & Saved) ===== */
+.gh-theme-builder__side-panel {
+    position: fixed;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    background: rgba(20, 20, 20, 0.98);
+    backdrop-filter: blur(30px) saturate(180%);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    padding: 16px;
+    max-width: min(90vw, 600px);
+    max-height: 50vh;
+    overflow-y: auto;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.gh-theme-builder__side-panel.active {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.gh-theme-builder__side-header {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gh-theme-builder__saved-count {
+    background: var(--accent-color);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Preset grid */
+.gh-theme-builder__preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 10px;
+}
+
+.gh-theme-builder__preset-item {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, border-color 0.15s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.gh-theme-builder__preset-item:hover {
+    transform: scale(1.05);
+}
+
+.gh-theme-builder__preset-item.active {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb), 0.5);
+}
+
+.gh-theme-builder__preset-item .gh-theme-builder__preset-checkmark {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 16px;
+    height: 16px;
+    background: var(--accent-color);
+    border: 2px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.gh-theme-builder__preset-item.active .gh-theme-builder__preset-checkmark {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.gh-theme-builder__preset-item .gh-theme-builder__preset-checkmark::before {
+    content: '';
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.gh-theme-builder__preset-item::before,
+.gh-theme-builder__preset-item::after {
+    content: '';
+    position: absolute;
+    width: 50%;
+    height: 100%;
+}
+
+.gh-theme-builder__preset-item::before {
+    left: 0;
+    background: var(--preset-bg);
+}
+
+.gh-theme-builder__preset-item::after {
+    right: 0;
+    background: var(--preset-accent);
+}
+
+/* Saved themes */
+.gh-theme-builder__saved-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gh-theme-builder__saved-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.15s;
+}
+
+.gh-theme-builder__saved-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-color);
+}
+
+.gh-theme-builder__saved-colors {
+    display: flex;
+    gap: 4px;
+}
+
+.gh-theme-builder__saved-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.gh-theme-builder__saved-name {
+    flex: 1;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+.gh-theme-builder__saved-item {
+    position: relative;
+}
+
+.gh-theme-builder__saved-item.active {
+    border-color: var(--accent-color);
+    background: rgba(var(--accent-color-rgb), 0.1);
+}
+
+.gh-theme-builder__saved-checkmark {
+    position: absolute;
+    left: 6px;
+    width: 20px;
+    height: 20px;
+    background: var(--accent-color);
+    border: 2px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.gh-theme-builder__saved-item.active .gh-theme-builder__saved-checkmark {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.gh-theme-builder__saved-checkmark::before {
+    content: '';
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.gh-theme-builder__saved-item.active .gh-theme-builder__saved-colors {
+    margin-left: 28px;
+}
+
+.gh-theme-builder__saved-delete {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(255, 82, 82, 0.1);
+    border: none;
+    color: #ff5252;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.gh-theme-builder__saved-delete:hover {
+    background: rgba(255, 82, 82, 0.2);
+}
+
+.gh-theme-builder__saved-delete svg {
+    width: 14px;
+    height: 14px;
+}
+
+.gh-theme-builder__io-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gh-theme-builder__io-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.gh-theme-builder__io-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    background: rgba(var(--accent-color-rgb), 0.1);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes colorShuffle {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(90deg);
+    }
+
+    50% {
+        transform: rotate(180deg);
+    }
+
+    75% {
+        transform: rotate(270deg);
+    }
+}
+
+.gh-theme-builder__action-btn.randomizing svg {
+    animation: colorShuffle 0.5s ease;
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+.gh-theme-builder__side-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.gh-theme-builder__side-panel::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.gh-theme-builder__side-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.gh-theme-builder__side-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    :root {
+        --theme-builder-app-scale: 0.82;
+        --theme-builder-app-translate-y: 60px;
+    }
+
+    body.theme-builder-active > :not(.gh-theme-builder):not(main):not(#streaming-container):not(#gallery-container):not(.gh-header):not(.gh-search):not(.chat-container) {
+        transform-origin: center center;
+    }
+
+    .gh-theme-builder__floating-btn {
+        bottom: 16px;
+        left: var(--app-page-padding-x);
+        width: 48px;
+        height: 48px;
+    }
+
+    .gh-theme-builder__floating-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Preview button in preview mode on mobile */
+    .gh-theme-builder.preview-mode .gh-theme-builder__preview-btn {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        padding: 0 !important;
+        bottom: 16px;
+        right: var(--app-page-padding-x);
+        opacity: 1 !important;
+    }
+
+    .gh-theme-builder.preview-mode .gh-theme-builder__preview-btn .gh-theme-builder__preview-label {
+        display: none !important;
+    }
+
+    .gh-theme-builder.preview-mode .gh-theme-builder__preview-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .gh-theme-builder__name-panel {
+        top: var(--app-overlay-top-offset);
+        left: var(--app-page-padding-x);
+        padding: 6px 8px;
+        max-width: calc(100vw - 220px - (var(--app-page-padding-x) * 2));
+        /* Leave room for save/cancel buttons */
+    }
+
+    .gh-theme-builder__name-input {
+        min-width: 100px;
+        max-width: 160px;
+        font-size: 0.7rem;
+        padding: 6px 8px;
+    }
+
+    .gh-theme-builder__format {
+        bottom: 12px;
+        left: var(--app-page-padding-x);
+    }
+
+    .gh-theme-builder__format-btn {
+        padding: 10px 14px;
+        font-size: 0.75rem;
+        min-height: 44px;
+    }
+
+    .gh-theme-builder__panel-toggles {
+        bottom: 12px;
+        gap: 6px;
+    }
+
+    .gh-theme-builder__panel-toggle {
+        padding: 10px 14px;
+        font-size: 0.75rem;
+        min-height: 44px;
+    }
+
+    .gh-theme-builder__panel-toggle svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .gh-theme-builder__save-panel {
+        top: var(--app-overlay-top-offset);
+        right: var(--app-page-padding-x);
+        gap: 6px;
+    }
+
+    .gh-theme-builder__save-btn,
+    .gh-theme-builder__cancel-btn,
+    .gh-theme-builder__preview-btn {
+        padding: 12px 16px;
+        font-size: 0.8rem;
+        min-height: 44px;
+        gap: 6px;
+    }
+
+    .gh-theme-builder__save-btn svg,
+    .gh-theme-builder__cancel-btn svg,
+    .gh-theme-builder__preview-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Preview button stays at bottom right on mobile */
+    .gh-theme-builder__preview-btn {
+        bottom: 16px;
+        right: var(--app-page-padding-x);
+    }
+
+    .gh-theme-builder__swatches {
+        left: var(--app-page-padding-x);
+        gap: 6px;
+    }
+
+    .gh-theme-builder__swatch,
+    .gh-theme-builder__swatch-preview {
+        width: 52px;
+        height: 52px;
+    }
+
+    .gh-theme-builder__actions {
+        right: 8px;
+        gap: 6px;
+    }
+
+    .gh-theme-builder__action-btn {
+        width: 48px;
+        height: 48px;
+    }
+
+    .gh-theme-builder__action-btn svg {
+        width: 26px;
+        height: 26px;
+        flex-shrink: 0;
+    }
+
+    .gh-theme-builder__side-panel {
+        bottom: 140px;
+        max-width: 95vw;
+        max-height: 60vh;
+    }
+
+    /* Harmony badge mobile adjustments */
+    .gh-theme-builder__harmony-badge {
+        font-size: 9px;
+        padding: 4px 8px;
+        bottom: calc(100% + 8px);
+    }
+
+    .gh-theme-builder__harmony-badge::after {
+        border-width: 5px;
+    }
+}
+
+/* ===== ACCESSIBILITY ===== */
+.gh-theme-builder__action-btn:focus,
+.gh-theme-builder__format-btn:focus,
+.gh-theme-builder__panel-toggle:focus,
+.gh-theme-builder__preset-item:focus,
+.gh-theme-builder__saved-item:focus,
+.gh-theme-builder__save-btn:focus,
+.gh-theme-builder__cancel-btn:focus,
+.gh-theme-builder__preview-btn:focus,
+.gh-theme-builder__floating-btn:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}

@@ -1,0 +1,1121 @@
+/* ═══════════════════════════════════════════════════════════
+   Profile Selector — Netflix / Apple TV inspired
+   Full-screen cinematic takeover with large centered avatars
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Header trigger (unchanged) ───────────────────────────── */
+
+.gh-profile-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+    padding-inline: 0.6rem 0.9rem;
+}
+
+.gh-profile-trigger__label {
+    max-width: 8.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+/* ── Avatar base ──────────────────────────────────────────── */
+
+.gh-profile-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: var(--radius-lg, 12px);
+    background: linear-gradient(135deg, rgba(110, 168, 254, 0.95), rgba(76, 110, 245, 0.95));
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex: 0 0 auto;
+}
+
+.gh-profile-avatar svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.gh-profile-avatar--icon svg {
+    width: 1.08rem;
+    height: 1.08rem;
+}
+
+.gh-profile-avatar--ghost {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary, #d7dbe7);
+}
+
+/* ── Large avatar (profile cards on the selector) ─────────── */
+
+.gh-profile-avatar--lg {
+    width: 7rem;
+    height: 7rem;
+    border-radius: var(--radius-lg, 12px);
+    font-size: 1.75rem;
+    letter-spacing: 0.04em;
+}
+
+.gh-profile-avatar--lg.gh-profile-avatar--icon svg {
+    width: 2.8rem;
+    height: 2.8rem;
+}
+
+/* ── Picker-size avatar (for create form icon chooser) ────── */
+
+.gh-profile-avatar--picker {
+    width: 2.3rem;
+    height: 2.3rem;
+    font-size: 0.82rem;
+}
+
+.gh-profile-avatar--picker.gh-profile-avatar--icon svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+/* ── Full-screen overlay ──────────────────────────────────── */
+
+.gh-profile-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--app-shell-z-modal, 970) + 10);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--background-color, #121212);
+    opacity: 1;
+    animation: gh-profile-bg-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.gh-profile-overlay.hidden {
+    display: none;
+}
+
+@keyframes gh-profile-bg-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Panel (no longer a modal — a centered stage) ─────────── */
+
+.gh-profile-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.5rem;
+    width: 100%;
+    max-width: 56rem;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+
+.gh-profile-panel__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+
+.gh-profile-panel__heading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.gh-profile-panel__eyebrow {
+    color: var(--accent-color, #f05454);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: gh-profile-fade-down 500ms 100ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.gh-profile-panel__title {
+    margin: 0;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary, #fff);
+    opacity: 0;
+    animation: gh-profile-fade-down 500ms 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.gh-profile-panel__copy {
+    display: none;
+}
+
+/* ── Close button ─────────────────────────────────────────── */
+
+.gh-profile-close {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 2;
+    opacity: 0;
+    animation: gh-profile-fade-in 400ms 300ms ease forwards;
+}
+
+/* ── Error banner ─────────────────────────────────────────── */
+
+.gh-profile-banner {
+    max-width: 28rem;
+    margin: 0;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-lg, 12px);
+    font-size: 0.88rem;
+    opacity: 0;
+    animation: gh-profile-fade-in 300ms ease forwards;
+}
+
+.gh-profile-banner--error {
+    background: rgba(240, 84, 84, 0.14);
+    border: 1px solid rgba(240, 84, 84, 0.25);
+    color: #ffd5d5;
+}
+
+/* ── Loading state ────────────────────────────────────────── */
+
+.gh-profile-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    min-height: 12rem;
+}
+
+.gh-profile-loading__spinner {
+    width: 44px;
+    height: 44px;
+}
+
+.gh-profile-loading__label {
+    margin: 0;
+    color: var(--text-secondary, #b8bfd2);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* ── Body ─────────────────────────────────────────────────── */
+
+.gh-profile-panel__body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    width: 100%;
+}
+
+.gh-profile-panel__body--loading {
+    justify-content: center;
+}
+
+.gh-profile-panel__section {
+    width: 100%;
+    min-height: 0;
+    min-width: 0;
+}
+
+.gh-profile-panel__section--selection {
+    overflow: visible;
+}
+
+.gh-profile-panel__section--selection.is-collapsed {
+    overflow: hidden;
+}
+
+.gh-profile-panel__section--create {
+    max-width: 28rem;
+}
+
+.gh-profile-panel__section--create.is-expanded {
+    flex: 0 0 auto;
+}
+
+/* ── Profile grid — horizontal avatar row ─────────────────── */
+
+.gh-profile-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.gh-profile-section-heading {
+    display: none;
+}
+
+.gh-profile-selection__list {
+    width: 100%;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+}
+
+.gh-profile-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1rem 0;
+}
+
+/* ── Profile card — large avatar tile ─────────────────────── */
+
+.gh-profile-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0;
+    animation: gh-profile-avatar-in 450ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: var(--profile-index-delay, 0ms);
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gh-profile-card:hover:not(:disabled),
+.gh-profile-card:focus-visible {
+    transform: scale(1.08);
+}
+
+.gh-profile-card:hover:not(:disabled) .gh-profile-avatar,
+.gh-profile-card:focus-visible .gh-profile-avatar {
+    box-shadow:
+        0 0 0 3px rgba(255, 255, 255, 0.7),
+        0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.gh-profile-card:disabled {
+    cursor: default;
+    opacity: 0.45;
+}
+
+.gh-profile-card .gh-profile-avatar {
+    transition: box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gh-profile-card.is-active .gh-profile-avatar {
+    box-shadow:
+        0 0 0 3px var(--accent-color, #f05454),
+        0 0 20px rgba(240, 84, 84, 0.3);
+}
+
+.gh-profile-card.is-active:hover:not(:disabled) .gh-profile-avatar,
+.gh-profile-card.is-active:focus-visible .gh-profile-avatar {
+    box-shadow:
+        0 0 0 3px var(--accent-color, #f05454),
+        0 0 24px rgba(240, 84, 84, 0.45);
+}
+
+.gh-profile-card--ephemeral .gh-profile-avatar {
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.gh-profile-card__name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    max-width: 8.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-secondary, #b8bfd2);
+    transition: color 200ms ease;
+}
+
+.gh-profile-card:hover:not(:disabled) .gh-profile-card__name {
+    color: var(--text-primary, #fff);
+}
+
+.gh-profile-card__meta {
+    display: none;
+}
+
+.gh-profile-card__badge {
+    position: absolute;
+    top: -0.35rem;
+    right: -0.35rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: var(--accent-color, #f05454);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Add-profile button (inline with avatars) ─────────────── */
+
+.gh-profile-add-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0;
+    animation: gh-profile-avatar-in 450ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: var(--profile-index-delay, 0ms);
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gh-profile-add-btn:hover,
+.gh-profile-add-btn:focus-visible {
+    transform: scale(1.08);
+}
+
+.gh-profile-add-btn__circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 7rem;
+    height: 7rem;
+    border-radius: var(--radius-lg, 12px);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.5);
+    transition:
+        border-color 200ms ease,
+        background 200ms ease,
+        color 200ms ease,
+        box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gh-profile-add-btn__circle svg {
+    width: 2.2rem;
+    height: 2.2rem;
+    stroke-width: 1.5;
+}
+
+.gh-profile-add-btn:hover .gh-profile-add-btn__circle,
+.gh-profile-add-btn:focus-visible .gh-profile-add-btn__circle {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+.gh-profile-add-btn__label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text-secondary, #b8bfd2);
+    transition: color 200ms ease;
+}
+
+.gh-profile-add-btn:hover .gh-profile-add-btn__label {
+    color: var(--text-primary, #fff);
+}
+
+/* ── Guest skip link ──────────────────────────────────────── */
+
+.gh-profile-guest-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 1rem;
+    border: 0;
+    border-radius: var(--radius-md, 8px);
+    background: transparent;
+    color: var(--text-secondary, #b8bfd2);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    opacity: 0;
+    animation: gh-profile-fade-in 400ms 600ms ease forwards;
+    transition: color 200ms ease, background 200ms ease;
+}
+
+.gh-profile-guest-link:hover,
+.gh-profile-guest-link:focus-visible {
+    color: var(--text-primary, #fff);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.gh-profile-guest-link svg {
+    width: 1rem;
+    height: 1rem;
+    opacity: 0.6;
+}
+
+.gh-profile-guest-link.is-active {
+    color: var(--accent-color, #f05454);
+}
+
+/* ── Search (only for many profiles) ──────────────────────── */
+
+.gh-profile-search {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    opacity: 0;
+    animation: gh-profile-fade-in 400ms 350ms ease forwards;
+}
+
+.gh-profile-search__label {
+    display: none;
+}
+
+.gh-profile-search__input {
+    width: 100%;
+    max-width: 18rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg, 12px);
+    padding: 0.65rem 1rem;
+    color: var(--text-primary, #fff);
+    font-size: 0.88rem;
+    transition: border-color 200ms ease, background 200ms ease;
+}
+
+.gh-profile-search__input::placeholder {
+    color: var(--text-secondary, #b8bfd2);
+    opacity: 0.6;
+}
+
+.gh-profile-search__input:focus {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb, 240, 84, 84), 0.15);
+}
+
+/* ── Empty state ──────────────────────────────────────────── */
+
+.gh-profile-empty {
+    grid-column: 1 / -1;
+    padding: 2rem 1rem;
+    color: var(--text-secondary, #b8bfd2);
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+/* ── Collapsed selection summary ──────────────────────────── */
+
+.gh-profile-selection__collapsed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-lg, 12px);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    opacity: 0;
+    animation: gh-profile-fade-in 300ms ease forwards;
+}
+
+.gh-profile-selection__collapsed .gh-profile-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-md, 8px);
+    font-size: 0.7rem;
+}
+
+.gh-profile-selection__collapsed-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.gh-profile-selection__collapsed-copy {
+    min-width: 0;
+    text-align: left;
+}
+
+.gh-profile-selection__collapsed-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.gh-profile-selection__collapsed-meta {
+    color: var(--text-secondary, #b8bfd2);
+    font-size: 0.82rem;
+}
+
+/* ── Create form ──────────────────────────────────────────── */
+
+.gh-profile-create-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.gh-profile-create-toggle {
+    display: none;
+}
+
+.gh-profile-create-form,
+.gh-profile-manager__form {
+    margin: 0;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg, 12px);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
+    opacity: 0;
+    animation: gh-profile-form-in 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes gh-profile-form-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.gh-profile-create-form__title {
+    margin-bottom: 1rem;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-primary, #fff);
+}
+
+.gh-profile-create-form__fields,
+.gh-profile-manager__form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.gh-profile-create-form__fields .gh-profile-avatar--lg {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: var(--radius-md, 8px);
+    font-size: 1.1rem;
+}
+
+.gh-profile-create-form__fields .gh-profile-avatar--lg.gh-profile-avatar--icon svg {
+    width: 1.6rem;
+    height: 1.6rem;
+}
+
+.gh-profile-create-form__name,
+.gh-profile-manager__name {
+    flex: 1 1 10rem;
+}
+
+.gh-profile-create-form__swatch,
+.gh-profile-manager__form input[type="color"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.gh-profile-create-form__swatch-label {
+    color: var(--text-secondary, #b8bfd2);
+    font-size: 0.82rem;
+}
+
+.gh-profile-create-form__color,
+.gh-profile-manager__color {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-md, 8px);
+    background: transparent;
+    cursor: pointer;
+}
+
+/* ── Avatar library picker ────────────────────────────────── */
+
+.gh-avatar-library {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.gh-avatar-library__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.55rem;
+    min-width: 0;
+}
+
+.gh-avatar-library__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.gh-avatar-library__legend {
+    color: var(--text-secondary, #d7dbe7);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.gh-avatar-library__hint {
+    color: var(--text-secondary, #b8bfd2);
+    font-size: 0.8rem;
+}
+
+.gh-avatar-library__selected-label {
+    flex: 0 0 auto;
+    padding: 0.22rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(var(--accent-color-rgb, 240, 84, 84), 0.14);
+    color: var(--accent-color-light, #f47676);
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.gh-avatar-library__rail {
+    display: flex;
+    gap: 0.55rem;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.2rem 0.15rem 0.45rem;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+}
+
+.gh-avatar-library__option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    flex: 0 0 auto;
+    min-width: 4.75rem;
+    padding: 0.55rem 0.45rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md, 8px);
+    background: rgba(255, 255, 255, 0.02);
+    color: inherit;
+    scroll-snap-align: start;
+    transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.gh-avatar-library__option:hover:not(:disabled),
+.gh-avatar-library__option:focus-visible {
+    transform: translateY(-1px);
+    border-color: rgba(var(--accent-color-rgb, 240, 84, 84), 0.45);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.gh-avatar-library__option.is-selected {
+    border-color: rgba(var(--accent-color-rgb, 240, 84, 84), 0.8);
+    background: rgba(var(--accent-color-rgb, 240, 84, 84), 0.12);
+}
+
+.gh-avatar-library__option-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.gh-profile-create-form .gh-avatar-library {
+    margin-top: 0.8rem;
+}
+
+/* ── Animations ───────────────────────────────────────────── */
+
+@keyframes gh-profile-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes gh-profile-fade-down {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes gh-profile-avatar-in {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ── Reduced motion ───────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    .gh-profile-overlay,
+    .gh-profile-panel__eyebrow,
+    .gh-profile-panel__title,
+    .gh-profile-card,
+    .gh-profile-add-btn,
+    .gh-profile-guest-link,
+    .gh-profile-search,
+    .gh-profile-create-form,
+    .gh-profile-selection__collapsed,
+    .gh-profile-banner {
+        animation-duration: 0ms !important;
+        animation-delay: 0ms !important;
+    }
+
+    .gh-profile-card,
+    .gh-profile-add-btn,
+    .gh-profile-add-btn__circle,
+    .gh-profile-card .gh-profile-avatar {
+        transition-duration: 0ms !important;
+    }
+}
+
+[data-motion="reduced"] .gh-profile-card,
+[data-motion="reduced"] .gh-profile-add-btn {
+    animation-duration: 0ms !important;
+    animation-delay: 0ms !important;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .gh-profile-panel {
+        padding: 2rem 1.25rem;
+        gap: 2rem;
+    }
+
+    .gh-profile-avatar--lg {
+        width: 5.5rem;
+        height: 5.5rem;
+        font-size: 1.4rem;
+    }
+
+    .gh-profile-avatar--lg.gh-profile-avatar--icon svg {
+        width: 2.2rem;
+        height: 2.2rem;
+    }
+
+    .gh-profile-add-btn__circle {
+        width: 5.5rem;
+        height: 5.5rem;
+    }
+
+    .gh-profile-add-btn__circle svg {
+        width: 1.8rem;
+        height: 1.8rem;
+    }
+
+    .gh-profile-grid {
+        gap: 1.5rem;
+    }
+
+    .gh-profile-card__name {
+        font-size: 0.82rem;
+        max-width: 6rem;
+    }
+
+    .gh-profile-add-btn__label {
+        font-size: 0.82rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .gh-profile-avatar--lg {
+        width: 4.5rem;
+        height: 4.5rem;
+        font-size: 1.2rem;
+    }
+
+    .gh-profile-avatar--lg.gh-profile-avatar--icon svg {
+        width: 1.8rem;
+        height: 1.8rem;
+    }
+
+    .gh-profile-add-btn__circle {
+        width: 4.5rem;
+        height: 4.5rem;
+    }
+
+    .gh-profile-grid {
+        gap: 1.25rem;
+    }
+
+    .gh-profile-panel__title {
+        font-size: 1.5rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Admin profile management (Preferences panel)
+   These styles are separate from the selector overlay.
+   ═══════════════════════════════════════════════════════════ */
+
+.gh-profile-admin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+.gh-profile-current-card {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+        radial-gradient(circle at top right, rgba(110, 168, 254, 0.12), transparent 35%),
+        rgba(255, 255, 255, 0.03);
+}
+
+.gh-profile-current-card__identity {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+}
+
+.gh-profile-current-card__meta {
+    min-width: 0;
+}
+
+.gh-profile-current-card__eyebrow {
+    color: var(--text-secondary, #b8bfd2);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.gh-profile-current-card__title {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.gh-profile-current-card__copy {
+    color: var(--text-secondary, #b8bfd2);
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.gh-profile-current-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: flex-start;
+}
+
+.gh-profile-admin-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.95rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.gh-profile-admin-row__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.gh-profile-admin-row__identity {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    min-width: 0;
+}
+
+.gh-profile-admin-row__meta {
+    min-width: 0;
+}
+
+.gh-profile-admin-row__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+}
+
+.gh-profile-admin-row__badge {
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(110, 168, 254, 0.18);
+    color: #d9e9ff;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.gh-profile-admin-row__badge--muted {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary, #d7dbe7);
+}
+
+.gh-profile-admin-row__submeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    align-items: center;
+    color: var(--text-secondary, #b8bfd2);
+    font-size: 0.83rem;
+}
+
+.gh-profile-admin-row__submeta svg {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+.gh-profile-admin-row__actions {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+}
+
+.gh-profile-admin-row__editor {
+    width: 100%;
+    min-width: 0;
+    padding-top: 0.95rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gh-profile-inline-editor {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: flex-start;
+    margin-top: 0.8rem;
+    min-width: 0;
+}
+
+.gh-profile-inline-editor--expanded {
+    width: 100%;
+    margin-top: 0.9rem;
+}
+
+.gh-profile-inline-editor__fields {
+    width: 100%;
+}
+
+.gh-profile-inline-editor__name {
+    flex: 1 1 12rem;
+}
+
+.gh-profile-inline-editor__swatch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.gh-profile-inline-editor__label {
+    color: var(--text-secondary, #b8bfd2);
+    font-size: 0.82rem;
+}
+
+.gh-profile-inline-editor__color {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.gh-profile-inline-editor__actions {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+    margin-left: auto;
+}
+
+.gh-profile-inline-editor .gh-avatar-library {
+    flex: 1 1 100%;
+}
+
+.user-profile-meta {
+    display: inline-flex;
+    margin-top: 0.25rem;
+    color: var(--text-secondary, #b8bfd2);
+    font-size: 0.8rem;
+}
+
+/* Admin panel avatar sizing (smaller than selector) */
+.gh-profile-current-card .gh-profile-avatar--lg,
+.gh-profile-admin-row .gh-profile-avatar--lg {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: var(--radius-md, 8px);
+    font-size: 1rem;
+}
+
+.gh-profile-current-card .gh-profile-avatar--lg.gh-profile-avatar--icon svg,
+.gh-profile-admin-row .gh-profile-avatar--lg.gh-profile-avatar--icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .gh-profile-current-card {
+        flex-direction: column;
+    }
+
+    .gh-profile-admin-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .gh-profile-admin-row__header {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .gh-profile-admin-row__actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

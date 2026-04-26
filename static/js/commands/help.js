@@ -3,15 +3,55 @@
  * Handles the /help command which displays available commands
  */
 
-import { displayLocalSystemMessage } from '../modules/chatManager.js';
-// Import getAllHelpText from its own index file to dynamically get all help texts
-import { getAllHelpText } from './index.js'; 
+import { getAllHelpText } from './helpUtils.js';
+
+function buildHelpCard(commands) {
+  const entries = Object.entries(commands)
+    .filter(([, cmd]) => typeof cmd?.getHelpText === 'function')
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  const items = entries.map(([name, cmd]) => {
+    const helpText = cmd.getHelpText();
+    const description = helpText.includes(' - ')
+      ? helpText.split(' - ').slice(1).join(' - ')
+      : helpText.replace(/^•\s*/, '').replace(new RegExp(`^/${name}\\s*`), '').trim();
+
+    return `
+      <div class="chat-help-item">
+        <code class="chat-help-item__command">/${name}</code>
+        <span class="chat-help-item__desc">${description || 'Command available'}</span>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="chat-help-card">
+      <div class="chat-help-card__title">Available commands</div>
+      <div class="chat-help-list">${items}</div>
+    </div>
+  `.trim();
+}
 
 // Define the functions first
 function executeHelp(socket, displayLocalMessage, arg) {
-  const allHelp = getAllHelpText(); // Get all help texts dynamically
-  const helpText = `Available commands:\n${allHelp}`;
-  displayLocalSystemMessage(helpText.trim()); // Use the passed displayLocalMessage for consistency
+  // Access commands from the global registry at runtime (avoids circular dependency)
+  const commands = window.ragotModules?.commandHandler?.commands;
+  if (!commands) {
+    displayLocalMessage('Error: Command system not initialized');
+    return;
+  }
+
+  const allHelp = getAllHelpText(commands);
+  if (!allHelp.trim()) {
+    displayLocalMessage('No slash commands are available right now.', { icon: 'lightbulb' });
+    return;
+  }
+
+  displayLocalMessage(buildHelpCard(commands), {
+    isHtml: true,
+    persist: true,
+    icon: 'lightbulb'
+  });
 }
 
 function getHelpHelpText() {
@@ -20,7 +60,7 @@ function getHelpHelpText() {
 
 // Export the command object
 export const help = {
-    description: "Displays a list of available slash commands and their descriptions.",
-    execute: executeHelp,
-    getHelpText: getHelpHelpText
+  description: "Displays a list of available slash commands and their descriptions.",
+  execute: executeHelp,
+  getHelpText: getHelpHelpText
 };

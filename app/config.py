@@ -30,7 +30,16 @@ def get_application_root():
     else:
         # Running as a script
         # The root is the directory containing ghosthub.py
-        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        current_file = os.path.abspath(__file__)
+        
+        # Handle bytecode case: if __file__ is in __pycache__, go up one more level
+        if '__pycache__' in current_file:
+            # __file__ is something like /path/to/app/__pycache__/config.cpython-39.pyc
+            # We need to go up 3 levels: __pycache__ -> app -> ghosthub
+            return os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
+        else:
+            # Normal case: go up two directories from app/config.py
+            return os.path.dirname(os.path.dirname(current_file))
 
 class Config:
     """
@@ -45,28 +54,66 @@ class Config:
     # Default values for settings that can be overridden by JSON and then ENV VARS
     CACHE_EXPIRY = 300  # 5 minutes
     DEFAULT_PAGE_SIZE = 10
-    SESSION_EXPIRY = 3600  # 1 hour
-    SHUFFLE_MEDIA = True 
+    SESSION_EXPIRY = 604800  # 7 days (prevents admin session from expiring during normal usage)
+    SHUFFLE_MEDIA = False  # Better default: chronological order instead of shuffle
     WS_RECONNECT_ATTEMPTS = 10
     WS_RECONNECT_DELAY = 1000  # ms
     WS_RECONNECT_FACTOR = 1.5
     MEMORY_CLEANUP_INTERVAL = 60000  # ms
     MAX_CACHE_SIZE = 50
-    SAVE_CURRENT_INDEX = False # Added for saving current index
+    SAVE_VIDEO_PROGRESS = True  # Better default: save user's place for better UX
+    SAVE_PROGRESS_FOR_HIDDEN_FILES = True  # When False, progress is not saved for hidden files
+    ENABLE_SUBTITLES = True  # Better default: subtitles should be available by default
+    ENABLE_TV_SORTING = True  # Enable intelligent TV season/episode sorting
+    VIDEO_END_BEHAVIOR = "loop"  # What to do when video ends: "stop", "loop", or "play_next"
+    DEBUG_MODE = False  # Enable verbose console/debug logging (set True for development)
+    MAX_CATEGORY_SCAN_DEPTH = 0  # 0 = unlimited scan depth for nested media folders
+    UI_SETTINGS_MODE = "basic"  # Settings modal mode: "basic" (simplified) or "advanced" (all settings)
+    AUTO_OPTIMIZE_FOR_HARDWARE = True  # Enable dynamic scaling based on RAM
+    ENABLE_GZIP_COMPRESSION = True  # Compress text responses when clients support gzip
+    GZIP_MIN_SIZE = 1024  # Skip compression for tiny responses to save CPU on Pi hardware
+    GZIP_COMPRESSION_LEVEL = 5  # Middle-ground level for CPU vs bandwidth on embedded devices
+    ENABLE_GZIP_CACHE = True  # Reuse compressed static assets instead of recompressing on each request
+    GZIP_CACHE_MAX_ENTRIES = 64  # Keep the in-memory cache small for Raspberry Pi deployments
+    
+    # HDMI-CEC TV Wake-up Configuration
+    ENABLE_CEC_WAKE = True  # Enable automatic TV wake-up via CEC before casting
+    CEC_WAKE_TIMEOUT = 5    # Seconds to wait for CEC commands before proceeding
+
+    # Smaller chunks = less RAM per upload, better recovery from connection drops
+    UPLOAD_CHUNK_SIZE_FAST = 4 * 1024 * 1024    # 4MB for Ethernet connections
+    UPLOAD_CHUNK_SIZE_MEDIUM = 2 * 1024 * 1024  # 2MB for WiFi AP mode
+    UPLOAD_CHUNK_SIZE_SLOW = 1 * 1024 * 1024    # 1MB for mobile on AP
+    UPLOAD_CHUNK_SIZE_TAILSCALE = 128 * 1024    # 128KB for Tailscale (high latency, low jitter)
+
+    # Rate limiting (Mbps) - Prevents network saturation and abuse
+    # These are base limits for AP/WiFi; Ethernet gets 4x multiplier via network detection
+    # Set to 0 to disable rate limiting for that category
+    UPLOAD_RATE_LIMIT_PER_CLIENT = 50.0    # Mbps per client for uploads (base for AP/WiFi)
+    UPLOAD_RATE_LIMIT_GLOBAL = 500.0       # Mbps total for all uploads
+    DOWNLOAD_RATE_LIMIT_PER_CLIENT = 50.0  # Mbps per client for downloads (base for AP/WiFi)
+    DOWNLOAD_RATE_LIMIT_GLOBAL = 500.0     # Mbps total for all downloads
+    STREAM_MAX_DURATION_SECONDS = 0         # 0 = unlimited, >0 = hard cap per stream request
+    STREAM_READ_TIMEOUT_SECONDS = 15        # Per-chunk file read timeout for streaming
+    STALE_MEDIA_CLEANUP_INTERVAL = 21600    # Run stale media cleanup every 6 hours
+    STALE_MEDIA_CLEANUP_BATCH_SIZE = 5000   # Max rows validated per cleanup pass
+    INDEXING_CHUNK_SIZE_BASE = 25           # 2GB tier: files processed per indexing batch
+    INDEXING_CHUNK_SIZE_STANDARD = 75       # 4GB tier
+    INDEXING_CHUNK_SIZE_PRO = 150           # 8GB tier
+
+    # Connection-type rate limit multipliers (applied by rate_limit_service)
+    RATE_LIMIT_MULTIPLIER_ETHERNET = 4.0   # Ethernet: 50 * 4 = 200 Mbps effective
+    RATE_LIMIT_MULTIPLIER_LOCALHOST = 0.0  # Localhost: no limit (0 = disabled)
+    RATE_LIMIT_MULTIPLIER_WIFI = 1.0       # WiFi AP: use base limit
+    RATE_LIMIT_MULTIPLIER_TAILSCALE = 0.5  # Tailscale: 50 * 0.5 = 25 Mbps (high latency)
 
     # Tunneling settings
-    TUNNEL_PROVIDER = "none"  # "none", "pinggy", "cloudflare"
+    TUNNEL_PROVIDER = "none"  # "none", "pinggy", "cloudflare", "wireguard"
     PINGGY_ACCESS_TOKEN = ""
     TUNNEL_LOCAL_PORT = 5000
+    TUNNEL_AUTO_START = False  # Automatically start configured tunnel on boot
     SESSION_PASSWORD = ""  # Password for session access, empty means no password
-    
-    # GhostStream settings (external transcoding server)
-    GHOSTSTREAM_ENABLED = False
-    GHOSTSTREAM_SERVER = ""  # e.g., "192.168.4.2:8765" - leave empty for mDNS auto-discovery
-    GHOSTSTREAM_AUTO_TRANSCODE = True  # Auto-transcode incompatible formats
-    GHOSTSTREAM_DEFAULT_RESOLUTION = "1080p"  # 4k, 1080p, 720p, 480p, original
-    GHOSTSTREAM_DEFAULT_CODEC = "h264"  # h264, h265, vp9
-    GHOSTSTREAM_PREFER_ABR = False  # Use Adaptive Bitrate streaming
+    ADMIN_PASSWORD = "admin"  # Master password to reclaim admin status
     
     # Path resolution for script/executable modes
     APP_ROOT = get_application_root()
@@ -138,15 +185,17 @@ class Config:
     MEDIA_EXTENSIONS = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
 
 # Load configurations from JSON and environment variables after Config class definition
-_config_json_path = os.path.join(Config.INSTANCE_FOLDER_PATH, 'ghosthub_config.json')
+# Use absolute path to prevent nested folder issues
+_instance_folder = os.path.abspath(Config.INSTANCE_FOLDER_PATH)
+_config_json_path = os.path.join(_instance_folder, 'ghosthub_config.json')
 _python_config_from_json = {}
 
-if not os.path.exists(Config.INSTANCE_FOLDER_PATH):
+if not os.path.exists(_instance_folder):
     try:
-        os.makedirs(Config.INSTANCE_FOLDER_PATH)
-        logger.info(f"Created instance folder: {Config.INSTANCE_FOLDER_PATH}")
+        os.makedirs(_instance_folder)
+        logger.info(f"Created instance folder: {_instance_folder}")
     except OSError as e:
-        logger.error(f"Error creating instance folder {Config.INSTANCE_FOLDER_PATH}: {e}")
+        logger.error(f"Error creating instance folder {_instance_folder}: {e}")
 
 if os.path.exists(_config_json_path):
     try:
@@ -176,14 +225,37 @@ _configurable_keys_info = {
     'TUNNEL_PROVIDER': str,
     'PINGGY_ACCESS_TOKEN': str,
     'TUNNEL_LOCAL_PORT': int,
+    'TUNNEL_AUTO_START': lambda v: str(v).lower() == 'true',
     'SESSION_PASSWORD': str,
-    'SAVE_CURRENT_INDEX': lambda v: str(v).lower() == 'true',
-    'GHOSTSTREAM_ENABLED': lambda v: str(v).lower() == 'true',
-    'GHOSTSTREAM_SERVER': str,
-    'GHOSTSTREAM_AUTO_TRANSCODE': lambda v: str(v).lower() == 'true',
-    'GHOSTSTREAM_DEFAULT_RESOLUTION': str,
-    'GHOSTSTREAM_DEFAULT_CODEC': str,
-    'GHOSTSTREAM_PREFER_ABR': lambda v: str(v).lower() == 'true'
+    'ADMIN_PASSWORD': str,
+    'SAVE_VIDEO_PROGRESS': lambda v: str(v).lower() == 'true',
+    'SAVE_PROGRESS_FOR_HIDDEN_FILES': lambda v: str(v).lower() == 'true',
+    'ENABLE_SUBTITLES': lambda v: str(v).lower() == 'true',
+    'ENABLE_TV_SORTING': lambda v: str(v).lower() == 'true',
+    'VIDEO_END_BEHAVIOR': str,
+    'DEBUG_MODE': lambda v: str(v).lower() == 'true',
+    'UPLOAD_CHUNK_SIZE_FAST': int,
+    'UPLOAD_CHUNK_SIZE_MEDIUM': int,
+    'UPLOAD_CHUNK_SIZE_SLOW': int,
+    'UPLOAD_RATE_LIMIT_PER_CLIENT': float,
+    'UPLOAD_RATE_LIMIT_GLOBAL': float,
+    'DOWNLOAD_RATE_LIMIT_PER_CLIENT': float,
+    'DOWNLOAD_RATE_LIMIT_GLOBAL': float,
+    'STREAM_MAX_DURATION_SECONDS': float,
+    'STREAM_READ_TIMEOUT_SECONDS': float,
+    'STALE_MEDIA_CLEANUP_INTERVAL': int,
+    'STALE_MEDIA_CLEANUP_BATCH_SIZE': int,
+    'INDEXING_CHUNK_SIZE_BASE': int,
+    'INDEXING_CHUNK_SIZE_STANDARD': int,
+    'INDEXING_CHUNK_SIZE_PRO': int,
+    'MAX_CATEGORY_SCAN_DEPTH': int,
+    'UI_SETTINGS_MODE': str,
+    'AUTO_OPTIMIZE_FOR_HARDWARE': lambda v: str(v).lower() == 'true',
+    'ENABLE_GZIP_COMPRESSION': lambda v: str(v).lower() == 'true',
+    'GZIP_MIN_SIZE': int,
+    'GZIP_COMPRESSION_LEVEL': int,
+    'ENABLE_GZIP_CACHE': lambda v: str(v).lower() == 'true',
+    'GZIP_CACHE_MAX_ENTRIES': int,
 }
 
 for key, type_converter in _configurable_keys_info.items():

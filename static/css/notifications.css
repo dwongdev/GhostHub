@@ -1,0 +1,403 @@
+/* =============================================================
+   GhostHub Notification System
+   Toasts + Dialogs — fully themed via CSS variables
+   ============================================================= */
+
+/* ===================== TOAST CONTAINER ===================== */
+
+#toast-container {
+    position: fixed;
+    top: calc(68px + var(--safe-top));
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    z-index: 10001;
+    pointer-events: none;
+    max-width: 360px;
+    width: min(360px, calc(100vw - 48px));
+}
+
+/* ===================== TOAST ITEM ===================== */
+
+.gh-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--gh-surface-glass-strong, var(--surface-color));
+    border: 1px solid var(--gh-border-soft, var(--divider-color));
+    border-left: 4px solid var(--info-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--gh-shadow-float, var(--shadow-xl));
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.45;
+    pointer-events: all;
+    cursor: default;
+    /* enter state */
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.gh-toast.gh-toast--visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.gh-toast.gh-toast--leaving {
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 200ms ease, transform 200ms ease;
+}
+
+/* Type colour overrides */
+.gh-toast--success { border-left-color: var(--success-color); }
+.gh-toast--error   { border-left-color: var(--error-color); }
+.gh-toast--warning { border-left-color: var(--warning-color); }
+.gh-toast--info    { border-left-color: var(--info-color); }
+
+/* ---- Icon ---- */
+.gh-toast__icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-style: normal;
+}
+
+.gh-toast--success .gh-toast__icon { color: var(--success-color); }
+.gh-toast--error   .gh-toast__icon { color: var(--error-color); }
+.gh-toast--warning .gh-toast__icon { color: var(--warning-color); }
+.gh-toast--info    .gh-toast__icon { color: var(--info-color); }
+
+/* ---- Message ---- */
+.gh-toast__message {
+    flex-grow: 1;
+    color: var(--text-primary);
+    word-break: break-word;
+    padding-top: 1px;
+}
+
+.gh-toast__message--html {
+    line-height: 1.5;
+    max-height: min(300px, 50vh);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.gh-toast__message--html code {
+    font-family: var(--font-mono, monospace);
+}
+
+.gh-toast__message--html .chat-help-card {
+    display: grid;
+    gap: 8px;
+}
+
+.gh-toast__message--html .chat-help-card__title {
+    font-weight: 700;
+}
+
+.gh-toast__message--html .chat-help-list {
+    display: grid;
+    gap: 6px;
+}
+
+.gh-toast__message--html .chat-help-item {
+    display: grid;
+    gap: 2px;
+}
+
+.gh-toast__message--html .chat-help-item__command {
+    font-size: 0.8rem;
+}
+
+/* ---- Close button ---- */
+.gh-toast__close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    line-height: 1;
+    transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.gh-toast__close:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ===================== DIALOG OVERLAY ===================== */
+
+#dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 10002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    backdrop-filter: blur(2px);
+    /* enter animation */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+}
+
+#dialog-overlay.gh-dialog-overlay--visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ===================== DIALOG BOX ===================== */
+
+.gh-dialog {
+    background: var(--gh-surface-glass-strong, var(--surface-color));
+    border: 1px solid var(--gh-border-soft, var(--divider-color));
+    border-radius: var(--radius-xl);
+    box-shadow: var(--gh-shadow-float, var(--shadow-xl));
+    padding: 22px;
+    width: 100%;
+    max-width: 400px;
+    /* enter animation */
+    transform: scale(0.95) translateY(8px);
+    transition: transform 180ms ease;
+}
+
+#dialog-overlay.gh-dialog-overlay--visible .gh-dialog {
+    transform: scale(1) translateY(0);
+}
+
+/* ---- Title ---- */
+.gh-dialog__title {
+    font-size: 1rem;
+    font-weight: 650;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+/* ---- Message ---- */
+.gh-dialog__message {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0 0 18px 0;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* When there's no title, message is the first child — adjust margin */
+.gh-dialog__message:first-child {
+    margin-top: 0;
+}
+
+/* ---- Prompt input ---- */
+.gh-dialog__input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    background: var(--background-color-light);
+    border: 1px solid var(--divider-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    outline: none;
+    margin-bottom: 20px;
+    transition: border-color var(--transition-fast);
+}
+
+.gh-dialog__input:focus {
+    border-color: var(--accent-color);
+}
+
+.gh-dialog__input::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* ---- Actions row ---- */
+.gh-dialog__actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+/* ---- Buttons ---- */
+.gh-dialog__btn {
+    min-height: 0;
+    height: auto;
+    padding: 8px 18px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* ===================== STATUS LANE ===================== */
+
+.gh-status-lane {
+    position: fixed;
+    left: 50%;
+    bottom: calc(20px + var(--safe-bottom));
+    transform: translateX(-50%);
+    width: min(460px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
+    padding: 12px 14px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--divider-color);
+    background: rgba(var(--surface-color-rgb, 18, 22, 32), 0.94);
+    box-shadow: var(--shadow-xl);
+    color: var(--text-primary);
+    z-index: 10001;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    transition: bottom 180ms ease, width 180ms ease, padding 180ms ease;
+}
+
+.gh-status-lane[hidden] {
+    display: none;
+}
+
+.gh-status-lane__icon {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(var(--accent-color-rgb), 0.14);
+}
+
+.gh-status-lane__icon--busy {
+    position: relative;
+}
+
+.gh-status-lane__icon--busy::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border: 2px solid rgba(var(--accent-color-rgb), 0.18);
+    border-top-color: rgba(var(--accent-color-rgb), 0.9);
+    border-radius: 50%;
+    animation: gh-status-spin 0.9s linear infinite;
+}
+
+.gh-status-lane__body {
+    min-width: 0;
+    flex: 1;
+}
+
+.gh-status-lane__title {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.25;
+}
+
+.gh-status-lane__meta {
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 0.84rem;
+    line-height: 1.25;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.gh-status-lane--success .gh-status-lane__icon {
+    background: var(--success-color);
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14);
+}
+
+.gh-status-lane--warning .gh-status-lane__icon {
+    background: var(--warning-color);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.16);
+}
+
+.gh-status-lane--error .gh-status-lane__icon {
+    background: var(--error-color);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.16);
+}
+
+@keyframes gh-status-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===================== RESPONSIVE ===================== */
+
+@media (max-width: 768px) {
+    #toast-container {
+        top: calc(58px + var(--safe-top));
+        right: max(10px, var(--safe-right));
+        left: auto;
+        width: min(290px, calc(100vw - 20px - var(--safe-left) - var(--safe-right)));
+        max-width: min(290px, calc(100vw - 20px - var(--safe-left) - var(--safe-right)));
+        gap: 6px;
+    }
+
+    .gh-toast {
+        gap: 7px;
+        padding: 9px 11px;
+        font-size: 0.78rem;
+        border-radius: var(--radius-md);
+        line-height: 1.3;
+    }
+
+    .gh-toast__icon {
+        width: 15px;
+        height: 15px;
+        font-size: 11px;
+    }
+
+    .gh-toast__close {
+        width: 16px;
+        height: 16px;
+        font-size: 12px;
+    }
+
+    .gh-dialog {
+        max-width: 100%;
+    }
+
+    .gh-status-lane {
+        bottom: calc(12px + var(--safe-bottom));
+        width: calc(100vw - 20px);
+        max-width: calc(100vw - 20px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gh-toast,
+    .gh-toast.gh-toast--leaving,
+    #dialog-overlay,
+    .gh-dialog {
+        transition: none;
+    }
+
+    .gh-status-lane__icon--busy::after {
+        animation: none;
+    }
+}

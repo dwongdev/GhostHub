@@ -1,49 +1,83 @@
+# Local agent files
+/.agent/
+/.claude/
+/CLAUDE.md
+/AGENTS.md
+**/.agent/
+**/.claude/
+**/CLAUDE.md
+**/AGENTS.md
+.publicignore
+**/.publicignore
+
+# Runtime/generated files
+/dist/
+/instance/*
+!/instance/.gitkeep
+/.pytest_cache/
+/venv/
+/tmp/
+/temp/
+/var/
+/build/
+/downloads/
+/uploadFiles
+/Ghosthub_pi_github.zip
+*.zip
+*.log
+*.db
+
+# Media/runtime content
+/media/*
+!/media/README.md
+
 # Python
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
+.coverage
+.tmp/
 *.egg-info/
 .installed.cfg
 *.egg
+.eggs/
+eggs/
+sdist/
 
-# Virtual Environment
-venv/
-ENV/
-env/
+# JS
+node_modules/
+**/node_modules/
+static/js/coverage/
 
-# IDE
+# Env/secrets
+.env
+.env.*
+.ghosthub-credentials
+ghosthub-credentials
+*.credentials
+.credentials.example
+
+# IDE/OS
+.DS_Store
+Thumbs.db
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# OS specific
-.DS_Store
-Thumbs.db
-
-# Application specific
-instance/*
-!instance/.gitkeep
-docker/docker-compose.yml
-media/*
-!media/README.md
+# Generated binaries/build artifacts
+GhostHubSwift/
+ENV/
+env/
+lib/
+lib64/
+parts/
 *.exe
 cloudflared.exe
 ffmpeg.exe
 ffprobe.exe
-
-# Keep the media directory but ignore its contents
+tv_runtime.py
+docker/docker-compose.yml
