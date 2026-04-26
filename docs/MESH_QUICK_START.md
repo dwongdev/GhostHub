@@ -18,44 +18,87 @@ GhostHub can use Headscale and Tailscale to create an optional secure mesh for r
 
 ### Step 2: Connect Client Device
 
-#### Option A: Tailscale App (Recommended)
-1. Install Tailscale app on your device
-2. Copy the **join command** from GhostHub admin panel
-3. Run command in terminal:
-   ```bash
-   tailscale up --login-server http://YOUR_PI_IP:8080 --authkey YOUR_KEY
-   ```
-4. Access GhostHub at: `http://ghosthub.mesh.local:5000`
+The Remote Access modal shows device-specific instructions. Use those values first; the examples below show the shape of the commands.
 
-#### Option B: Manual Registration
-1. Install Tailscale and run: `tailscale up --login-server http://YOUR_PI_IP:8080`
-2. Copy the **node key** from registration page
-3. Paste into GhostHub admin panel → **"Register Device"**
-4. Device connects automatically
+#### Windows
+
+1. Install Tailscale from `https://tailscale.com/download`.
+2. Open PowerShell. If Tailscale asks for elevation, use an Administrator PowerShell.
+3. Run the join command shown in GhostHub:
+
+   ```powershell
+   tailscale up --login-server http://YOUR_PI_IP:8080 --authkey YOUR_KEY --hostname my-windows-pc --accept-routes --accept-dns
+   ```
+
+4. Open `http://ghosthub.mesh.local:5000`.
+
+#### macOS or Linux
+
+1. Install Tailscale from `https://tailscale.com/download`.
+2. Open Terminal.
+3. Run the join command shown in GhostHub:
+
+   ```bash
+   tailscale up --login-server http://YOUR_PI_IP:8080 --authkey YOUR_KEY --hostname my-device --accept-routes --accept-dns
+   ```
+
+   On Linux, run the command with `sudo` if your Tailscale install requires it.
+
+4. Open `http://ghosthub.mesh.local:5000`.
+
+#### iPhone, iPad, or Android
+
+1. Install the Tailscale app.
+2. In the Tailscale app settings, add the custom server URL shown in GhostHub.
+3. If the app shows a `nodekey:...` registration value, copy it.
+4. Paste the node key into GhostHub Remote Access and choose Register Device.
+5. Open `http://ghosthub.mesh.local:5000`.
 
 ### Step 3: Verify Connection
+On Windows PowerShell:
+
+```powershell
+tailscale status
+ping ghosthub.mesh.local
+curl.exe http://ghosthub.mesh.local:5000
+```
+
+On macOS or Linux:
+
 ```bash
-# On client device:
-tailscale status    # Should show "ghosthub" node
-ping ghosthub.mesh.local # Should respond
-curl http://ghosthub.mesh.local:5000  # Should load GhostHub
+tailscale status
+ping ghosthub.mesh.local
+curl http://ghosthub.mesh.local:5000
 ```
 
 ## Troubleshooting Quick Fixes
 
 ### Pi Won't Join Mesh
+
+Run these Linux commands on the Pi:
+
 ```bash
-# Quick reset
 sudo tailscale logout
 sudo systemctl restart ghosthub-headscale
 ```
 
 ### Client Can't Connect
-```bash
-# On client:
+
+On Windows PowerShell:
+
+```powershell
 tailscale logout
 tailscale up --login-server http://YOUR_PI_IP:8080 --authkey NEW_KEY --force-reauth
 ```
+
+On macOS or Linux:
+
+```bash
+tailscale logout
+tailscale up --login-server http://YOUR_PI_IP:8080 --authkey NEW_KEY --force-reauth
+```
+
+On Linux, run the `tailscale` commands with `sudo` if your install requires it.
 
 ### ghosthub.mesh.local Not Resolving
 DNS updates automatically every 30 seconds. Just wait a moment and try again. If still not working, restart mesh from admin panel.

@@ -58,7 +58,9 @@ Password: choose your own
 Wi-Fi: optional, only needed if you are not using Ethernet
 ```
 
-Boot the Pi, wait for it to join the network, then SSH in. This path runs the release installer directly on the Pi:
+Boot the Pi, wait for it to join the network, then SSH in from your computer.
+
+On macOS, Linux, or Windows PowerShell:
 
 ```bash
 ssh ghost@ghosthub.local
@@ -70,14 +72,14 @@ If mDNS is not resolving yet, use the Pi's IP address:
 ssh ghost@<pi-ip-address>
 ```
 
-If SSH refuses to connect with a host key warning, your computer may have an old key cached for `ghosthub.local` or that IP. Refresh it:
+If SSH refuses to connect with a host key warning, your computer may have an old key cached for `ghosthub.local` or that IP. Refresh it from your computer:
 
 ```bash
 ssh-keygen -R ghosthub.local
 ssh-keygen -R <pi-ip-address>
 ```
 
-Then run:
+After you are logged into the Pi, run these commands on the Pi:
 
 ```bash
 curl -L -o install_ghosthub.sh \
@@ -109,10 +111,18 @@ Node.js/npm
 
 The deploy CLI creates `venv/`, installs Python requirements, installs `static/js` dependencies, builds the release ZIP, uploads it, and runs the Pi installer.
 
-Do not SSH into the Pi for this path. Run the CLI from the repository root on your computer:
+Do not SSH into the Pi for this path. Run the CLI from the repository root on your computer.
+
+On macOS or Linux:
 
 ```bash
 ./scripts/deploy_to_pi.sh
+```
+
+On Windows PowerShell:
+
+```powershell
+.\scripts\deploy_to_pi.ps1
 ```
 
 The script walks you through the deployment mode and asks for the Pi password if needed.
@@ -130,12 +140,6 @@ ssh-keygen -R ghosthub.local
 ssh-keygen -R <pi-ip-address>
 ```
 
-On Windows PowerShell:
-
-```powershell
-.\scripts\deploy_to_pi.ps1
-```
-
 Full DIY guide: [DIY Install](DIY_INSTALL.md).
 
 Open one of these URLs after installation:
@@ -150,9 +154,23 @@ http://<pi-ip-address>:5000
 
 Use this for development on a normal workstation.
 
+On macOS or Linux:
+
 ```bash
 python3.9 -m venv venv
 source venv/bin/activate
+pip install -r requirements.txt
+cd static/js
+npm install
+cd ../..
+python ghosthub.py
+```
+
+On Windows PowerShell:
+
+```powershell
+py -3.9 -m venv venv
+.\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 cd static/js
 npm install
@@ -166,7 +184,7 @@ Then open `http://localhost:5000`.
 
 1. Plug in a USB drive with media folders.
 2. Open Settings and claim admin.
-3. Switch between Default, Streaming, and Gallery layouts.
+3. Switch between Streaming and Gallery layouts.
 4. Try Gallery upload from a desktop browser.
 5. Connect HDMI and cast media to the attached display.
 
@@ -175,6 +193,8 @@ Then open `http://localhost:5000`.
 From the admin panel, use the system update controls. GhostHub checks GitHub Releases, downloads the release installer, and preserves runtime state during the update.
 
 For manual pinned installs:
+
+Run this on the Pi after SSH:
 
 ```bash
 sudo ./install_ghosthub.sh --version v5.0.1

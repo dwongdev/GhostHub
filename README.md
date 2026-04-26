@@ -63,11 +63,15 @@ Password: choose your own
 Wi-Fi: optional, only needed if you are not using Ethernet
 ```
 
-For the release installer path, SSH into the Pi and run:
+For the release installer path, SSH into the Pi from your computer.
+
+On macOS, Linux, or Windows PowerShell:
 
 ```bash
 ssh ghost@ghosthub.local
 ```
+
+After you are logged into the Pi, run these commands on the Pi:
 
 ```bash
 curl -L -o install_ghosthub.sh \
@@ -78,10 +82,18 @@ sudo ./install_ghosthub.sh
 
 The installer downloads `Ghosthub_pi_github.zip` from GitHub Releases, installs system dependencies, configures the service, prepares USB/AP/HDMI support, and starts GhostHub.
 
-If you cloned this repository and want to deploy local source instead, do not SSH into the Pi. Run the deploy CLI from your computer:
+If you cloned this repository and want to deploy local source instead, do not SSH into the Pi. Run the deploy CLI from your computer.
+
+On macOS or Linux:
 
 ```bash
 ./scripts/deploy_to_pi.sh
+```
+
+On Windows PowerShell:
+
+```powershell
+.\scripts\deploy_to_pi.ps1
 ```
 
 The CLI offers Standard, Update, and Image Prep modes. It creates `venv/`, installs Python and JavaScript dependencies, builds the local `ghostpack` ZIP, uploads it from your computer, and never downloads app ZIPs from GitHub Releases.
@@ -91,7 +103,7 @@ The CLI offers Standard, Update, and Image Prep modes. It creates `venv/`, insta
 - Browser-based photo and video browsing from USB drives or configured media folders.
 - Mobile, tablet, desktop, and HDMI kiosk experiences.
 - Upload, download, rename, delete, move, and organize media.
-- Gallery, streaming, and default browsing layouts.
+- Streaming and Gallery browsing layouts.
 - Category discovery, hidden folders, playlists, sorting, search, and progress tracking.
 - Video playback with subtitles, thumbnails, resume progress, and browser-native controls.
 - TV casting to an HDMI display connected to the Pi.
@@ -172,6 +184,8 @@ See [Release Process](docs/RELEASES.md).
 
 GhostHub targets Python 3.9. Use a Python 3.9 virtual environment so local tests match Raspberry Pi deployments.
 
+On macOS or Linux:
+
 ```bash
 python3.9 -m venv venv
 source venv/bin/activate
@@ -182,17 +196,50 @@ cd ../..
 python ghosthub.py
 ```
 
-Run validation:
+On Windows PowerShell:
+
+```powershell
+py -3.9 -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+cd static/js
+npm install
+cd ../..
+python ghosthub.py
+```
+
+Run validation.
+
+On macOS or Linux:
 
 ```bash
 ./venv/bin/python scripts/run_all_tests.py
 ```
 
-Run focused backend/frontend tests:
+On Windows PowerShell:
+
+```powershell
+.\venv\Scripts\python.exe scripts\run_all_tests.py
+```
+
+Run focused backend/frontend tests.
+
+On macOS or Linux:
 
 ```bash
 ./venv/bin/python -m pytest tests/test_admin_routes.py -v
-cd static/js && npm test
+cd static/js
+npm test
+cd ../..
+```
+
+On Windows PowerShell:
+
+```powershell
+.\venv\Scripts\python.exe -m pytest tests\test_admin_routes.py -v
+cd static\js
+npm test
+cd ..\..
 ```
 
 ## Architecture

@@ -3,6 +3,8 @@
 ## Overview
 This guide helps diagnose and fix issues with GhostHub's Secure Mesh (Headscale + Tailscale) remote access feature.
 
+Unless a section is labeled Windows, macOS, or Linux client, commands are Linux commands to run on the GhostHub Pi over SSH.
+
 ## Runtime Expectations
 
 - Headscale startup wait: up to 60 seconds
@@ -182,20 +184,28 @@ tailscale ip -4
 ```
 
 ### 3. Verify Client Can Connect
-```bash
-# On client device with Tailscale installed:
+
+On Windows PowerShell:
+
+```powershell
 tailscale logout
 tailscale up --login-server http://YOUR_PI_IP:8080 --authkey NEW_KEY --force-reauth
-
-# Should show ghosthub node
 tailscale status
-
-# Should resolve to Pi's Tailscale IP
 ping ghosthub.mesh.local
+curl.exe http://ghosthub.mesh.local:5000
+```
 
-# Should access GhostHub
+On macOS or Linux:
+
+```bash
+tailscale logout
+tailscale up --login-server http://YOUR_PI_IP:8080 --authkey NEW_KEY --force-reauth
+tailscale status
+ping ghosthub.mesh.local
 curl http://ghosthub.mesh.local:5000
 ```
+
+On Linux, run the `tailscale` commands with `sudo` if your install requires it.
 
 ## Log Locations
 

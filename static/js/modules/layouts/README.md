@@ -4,7 +4,6 @@ This guide defines how layouts must be structured under `static/js/modules/layou
 
 ## Layouts in GhostHub
 
-- `default/`: category grid + media viewer flow
 - `streaming/`: row-based browsing (Netflix-style)
 - `gallery/`: date timeline browsing (photos-first)
 - `shared/`: reusable lifecycle/orchestration helpers
@@ -108,4 +107,3 @@ const el = document.getElementById('auto::categories');
 3. Are shared helpers used instead of duplicated orchestration?
 4. Is layout behavior unchanged except for lifecycle hardening?
 5. Are focused tests updated/passing for changed layout modules?
-

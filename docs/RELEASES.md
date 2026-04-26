@@ -50,16 +50,32 @@ The release workflow runs when a `v*.*.*` tag is pushed. It:
 
 1. Confirm `app/version.py` and `install_ghosthub.sh` match.
 2. Run focused tests for the changed surfaces.
-3. Run the full suite:
+3. Run the full suite.
+
+   On macOS or Linux:
 
    ```bash
    ./venv/bin/python scripts/run_all_tests.py
    ```
 
-4. Package the app:
+   On Windows PowerShell:
+
+   ```powershell
+   .\venv\Scripts\python.exe scripts\run_all_tests.py
+   ```
+
+4. Package the app.
+
+   On macOS or Linux:
 
    ```bash
    ./venv/bin/python scripts/ghostpack.py --zip
+   ```
+
+   On Windows PowerShell:
+
+   ```powershell
+   .\venv\Scripts\python.exe scripts\ghostpack.py --zip
    ```
 
 5. Publish a `vX.Y.Z` tag.

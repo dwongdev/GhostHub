@@ -41,9 +41,11 @@ Boot the Pi and wait for it to join the network.
 
 ## Option A: Install From GitHub Releases
 
-Use this once public release assets exist.
+Use this to install the published GhostHub release assets directly on the Pi.
 
-SSH into the Pi:
+SSH into the Pi from your computer.
+
+On macOS, Linux, or Windows PowerShell:
 
 ```bash
 ssh ghost@ghosthub.local
@@ -55,14 +57,14 @@ If `ghosthub.local` does not resolve, use the Pi's IP address:
 ssh ghost@<pi-ip-address>
 ```
 
-If SSH refuses to connect with a host key warning, your computer may have an old key cached for `ghosthub.local` or that IP. Refresh it:
+If SSH refuses to connect with a host key warning, your computer may have an old key cached for `ghosthub.local` or that IP. Refresh it from your computer:
 
 ```bash
 ssh-keygen -R ghosthub.local
 ssh-keygen -R <pi-ip-address>
 ```
 
-Run the GhostHub release installer:
+After you are logged into the Pi, run the GhostHub release installer on the Pi:
 
 ```bash
 curl -L -o install_ghosthub.sh \
@@ -84,7 +86,9 @@ Node.js/npm
 
 The deploy CLI creates `venv/`, installs Python requirements, installs `static/js` dependencies, builds the release ZIP, uploads it, and runs the Pi installer.
 
-Do not SSH into the Pi for this path. Run the CLI from the repository root on your computer:
+Do not SSH into the Pi for this path. Run the CLI from the repository root on your computer.
+
+On macOS or Linux:
 
 ```bash
 ./scripts/deploy_to_pi.sh
