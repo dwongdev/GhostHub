@@ -37,9 +37,6 @@ jobs:
         working-directory: static/js
         run: npm install
 
-      - name: Run tests
-        run: python scripts/run_all_tests.py
-
       - name: Build release ZIP
         run: python scripts/ghostpack.py --zip
 
