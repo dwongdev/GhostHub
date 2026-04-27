@@ -1,7 +1,6 @@
 # GhostHub Architecture
 
-GhostHub is a monolithic, lifecycle-driven media platform optimized for Raspberry Pi-class hardware.
-It is not "Flask plus some JavaScript files". It is a single product surface composed from:
+GhostHub is a monolithic, lifecycle-driven media platform optimized for Raspberry Pi-class hardware. It is a single product surface composed from:
 
 - a Flask app factory and HTTP ingress layer
 - SPECTER-managed backend services, controllers, handlers, and runtime stores

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/BleedingXiko/GhostHub/security/advisories/new
+    about: Report a vulnerability privately. Do not open a public issue.
+  - name: User guide
+    url: https://github.com/BleedingXiko/GhostHub/blob/main/docs/HOW_TO_USE_GHOSTHUB.md
+    about: Setup and usage questions are usually answered here first.

@@ -34,10 +34,9 @@ Hostname: ghosthub
 Username: ghost
 Enable SSH: yes
 Password: choose your own
-Wi-Fi: optional, only needed if you are not using Ethernet
 ```
 
-Boot the Pi and wait for it to join the network.
+For the DIY installer, give the Pi network access over Ethernet. Plug it into your router, or connect it directly to your computer if you are sharing network access from that computer. Then boot the Pi.
 
 ## Option A: Install From GitHub Releases
 
@@ -68,7 +67,7 @@ After you are logged into the Pi, run the GhostHub release installer on the Pi:
 
 ```bash
 curl -L -o install_ghosthub.sh \
-  https://github.com/BleedingXiko/GhostHub/releases/latest/download/install_ghosthub.sh
+  https://github.com/BleedingXiko/GhostHub/releases/download/v5.0.1/install_ghosthub.sh
 chmod +x install_ghosthub.sh
 sudo ./install_ghosthub.sh
 ```

@@ -9,11 +9,11 @@ This is not an install or developer guide. For setup, see [Quick Start](QUICK_ST
 - A running GhostHub device.
 - A USB drive or configured media storage with photos and videos.
 - A phone, tablet, laptop, desktop, or HDMI display.
-- A modern browser. Chrome or Edge are the safest choices on desktop. Safari works well on iPhone and iPad.
+- A modern browser. Chrome or Edge work best on desktop. Safari works well on iPhone and iPad.
 
 ## Open GhostHub
 
-GhostHub usually runs in one of two network modes.
+GhostHub runs in one of two network modes.
 
 ### Access Point Mode
 
@@ -31,7 +31,7 @@ Password: ghost123
 
 ### Home Network Mode
 
-If the Pi is connected to your router by Wi-Fi or Ethernet, open one of:
+If the Pi is connected to your router by Ethernet, devices on that LAN can open one of these URLs. That includes phones and laptops connected to the router's Wi-Fi.
 
 ```text
 http://ghosthub.local
@@ -42,9 +42,9 @@ If `ghosthub.local` does not work, use the Pi IP address. Some networks and brow
 
 ### Device Notes
 
-On Windows, Chrome and Edge give the smoothest browser and app-install experience. Downloads usually land in your Downloads folder unless your browser asks each time.
+On Windows, Chrome and Edge give the smoothest browser and app-install experience. Downloads land in your Downloads folder unless your browser asks each time.
 
-On macOS, Safari, Chrome, and Edge can browse GhostHub. Chrome and Edge usually provide the clearest "install app" prompt.
+On macOS, Safari, Chrome, and Edge can browse GhostHub. Chrome and Edge provide the clearest "install app" prompt.
 
 On Linux, Chrome, Chromium, Edge, and Firefox work for normal browsing. If `ghosthub.local` does not resolve, use the Pi IP address.
 
@@ -376,7 +376,7 @@ The user list shows active sessions, profile names when available, IP addresses,
 
 ### GhostHub Will Not Open
 
-- Make sure your device is on the GhostHub Wi-Fi network or the same network as the Pi.
+- Make sure your device is on the GhostHub access-point Wi-Fi network, on the same Ethernet network as the Pi, or connected directly to the Pi by Ethernet.
 - Try `http://192.168.4.1` in access point mode.
 - Try `http://<pi-ip-address>:5000` on a home network.
 - Refresh the browser after reconnecting Wi-Fi.
@@ -404,7 +404,7 @@ The user list shows active sessions, profile names when available, IP addresses,
 ### Uploads Fail
 
 - Check free space on the target drive.
-- Stay on a stable Wi-Fi connection during large uploads.
+- Use a stable connection during large uploads. Ethernet is best; GhostHub access-point Wi-Fi can be slower.
 - Try fewer files at once.
 - Confirm the session password if prompted.
 - Large files over 16GB are not accepted.

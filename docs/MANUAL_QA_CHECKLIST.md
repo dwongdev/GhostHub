@@ -8,7 +8,7 @@ Run this checklist on actual Pi hardware before publishing or announcing a relea
 ## Pre-Test Setup
 - [ ] Fresh Pi boot
 - [ ] HDMI display connected
-- [ ] Network connected (WiFi or Ethernet)
+- [ ] Upstream network connected by Ethernet, or GhostHub access point active
 - [ ] Media files present (at least 10 videos, 10 images)
 
 ---
@@ -105,8 +105,8 @@ Run this checklist on actual Pi hardware before publishing or announcing a relea
 - [ ] File can be played immediately
 
 ### Network Settings (CRITICAL)
-- [ ] WiFi settings display
-- [ ] Change WiFi network
+- [ ] Access point settings display
+- [ ] Change access point network name/password/channel
 - [ ] Connection succeeds
 - [ ] Settings persist after reboot
 
@@ -244,7 +244,7 @@ If any of these fail, do not publish release assets until the issue is understoo
 - [ ] ❌ Videos don't play at all
 - [ ] ❌ Admin panel doesn't save settings
 - [ ] ❌ File uploads fail completely
-- [ ] ❌ WiFi settings don't persist
+- [ ] ❌ Access point settings don't persist
 - [ ] ❌ Pi overheats (> 85°C)
 - [ ] ❌ Memory leak (runs out of RAM)
 - [ ] ❌ Corrupted files crash the app

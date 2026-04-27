@@ -32,7 +32,7 @@ URL: http://ghosthub.local
 Fallback URL: http://192.168.4.1
 ```
 
-If the Pi is connected to Ethernet or another configured network, you can also open:
+If the Pi is connected to your router by Ethernet, devices on that LAN can also open:
 
 ```text
 http://<pi-ip-address>:5000
