@@ -9,11 +9,11 @@ This is not an install or developer guide. For setup, see [Quick Start](QUICK_ST
 - A running GhostHub device.
 - A USB drive or configured media storage with photos and videos.
 - A phone, tablet, laptop, desktop, or HDMI display.
-- A modern browser. Chrome or Edge are the safest choices on desktop. Safari works well on iPhone and iPad.
+- A modern browser. Chrome or Edge work best on desktop. Safari works well on iPhone and iPad.
 
 ## Open GhostHub
 
-GhostHub usually runs in one of two network modes.
+GhostHub runs in one of two network modes.
 
 ### Access Point Mode
 
@@ -42,9 +42,9 @@ If `ghosthub.local` does not work, use the Pi IP address. Some networks and brow
 
 ### Device Notes
 
-On Windows, Chrome and Edge give the smoothest browser and app-install experience. Downloads usually land in your Downloads folder unless your browser asks each time.
+On Windows, Chrome and Edge give the smoothest browser and app-install experience. Downloads land in your Downloads folder unless your browser asks each time.
 
-On macOS, Safari, Chrome, and Edge can browse GhostHub. Chrome and Edge usually provide the clearest "install app" prompt.
+On macOS, Safari, Chrome, and Edge can browse GhostHub. Chrome and Edge provide the clearest "install app" prompt.
 
 On Linux, Chrome, Chromium, Edge, and Firefox work for normal browsing. If `ghosthub.local` does not resolve, use the Pi IP address.
 

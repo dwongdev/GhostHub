@@ -1,14 +1,21 @@
 # GhostHub
 
-**A private Raspberry Pi 4 media hub that feels like a polished streaming app, runs from your own storage, and works without a cloud account.**
-
-GhostHub turns a Raspberry Pi 4 into a local-first photo and video system for USB drives, phones, tablets, laptops, and an HDMI screen. It gives you a cinematic browser UI, profiles, uploads, resume progress, TV casting, admin controls, offline access-point mode, and GitHub Releases updates in a package you can inspect and modify.
+**A self-hosted media server for Raspberry Pi 4. Browse your photos and videos from any device on your network — no cloud, no account, no subscription.**
 
 <p>
-  <a href="https://github.com/BleedingXiko/GhostHub/releases/latest"><strong>Latest Release</strong></a>
+  <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg"></a>
+  <a href="https://github.com/BleedingXiko/GhostHub/releases/tag/v5.0.1"><img alt="Latest app release: v5.0.1" src="https://img.shields.io/badge/app%20release-v5.0.1-blue"></a>
+  <a href="https://github.com/BleedingXiko/GhostHub/releases/tag/B5"><img alt="Ready-to-flash image built on v5.0.1" src="https://img.shields.io/badge/ready--to--flash%20image-built%20on%20v5.0.1-success?logo=raspberrypi&logoColor=white"></a>
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Raspberry%20Pi%204-c51a4a?logo=raspberrypi&logoColor=white">
+  <img alt="Status" src="https://img.shields.io/badge/status-active-brightgreen">
+</p>
+
+<p>
+  <a href="https://github.com/BleedingXiko/GhostHub/releases/tag/v5.0.1"><strong>Latest Release</strong></a>
   · <a href="docs/QUICK_START.md"><strong>Quick Start</strong></a>
   · <a href="docs/FLASH_GHOSTHUB_IMAGE.md"><strong>Flash Image</strong></a>
   · <a href="docs/DIY_INSTALL.md"><strong>DIY Install</strong></a>
+  · <a href="docs/HOW_TO_USE_GHOSTHUB.md"><strong>User Guide</strong></a>
   · <a href="CONTRIBUTING.md"><strong>Contributing</strong></a>
   · <a href="SECURITY.md"><strong>Security</strong></a>
 </p>
@@ -16,104 +23,108 @@ GhostHub turns a Raspberry Pi 4 into a local-first photo and video system for US
 <p>
   <img src="StreamingLayout.PNG" alt="GhostHub streaming layout on mobile" width="31%">
   <img src="WhosWatching.PNG" alt="GhostHub profile picker on mobile" width="31%">
-  <img src="Settings.PNG" alt="GhostHub system settings on mobile" width="31%">
+  <img src="Settings.PNG" alt="GhostHub system stats" width="31%">
 </p>
 
-> **Compatibility:** GhostHub's Pi install path is built for Raspberry Pi 4 on `2022-01-28-raspios-bullseye-armhf-lite`. It is not a generic "any Raspberry Pi OS image" installer.
+> **Compatibility:** GhostHub's Pi install path targets Raspberry Pi 4 running `2022-01-28-raspios-bullseye-armhf-lite`. It is not a generic installer for every Raspberry Pi OS image.
 
-## Why GhostHub
+---
 
-- **Your media stays yours.** Browse local USB storage from any browser on your network.
-- **Built for the couch and the pocket.** Mobile-first UI, HDMI kiosk mode, and TV casting are first-class.
-- **Useful offline.** The Pi can create its own `GhostHub` Wi-Fi network for portable setups.
-- **Not just a demo.** Uploads, downloads, profiles, progress, themes, admin tools, logs, updates, and hardware status are included.
-- **Open source and hackable.** Python 3.9 backend, modular ES frontend, SPECTER services/controllers, and vendored RAGOT runtime.
+## What It Does
 
-## 30-Second Setup
+GhostHub turns a Raspberry Pi 4 and USB storage into a private media server for your home network. Open it from a phone, tablet, laptop, desktop browser, or HDMI display to browse, play, upload, download, organize, and share your photo and video library.
 
-### Fastest: Flash The Ready-To-Use Image
+GhostHub supports two network modes:
+- **Home network** — the Pi joins your Wi-Fi or Ethernet network and is reachable at `http://ghosthub.local`.
+- **Access point** — the Pi broadcasts its own `GhostHub` Wi-Fi network for portable or offline use.
 
-1. Download the ready-to-flash GhostHub image from the project download page or announcement post.
-2. Flash it to a microSD card with Raspberry Pi Imager or balenaEtcher.
-3. Boot the Pi, connect to the `GhostHub` Wi-Fi network, and open `http://ghosthub.local` or `http://192.168.4.1`.
+## Features
 
-That path is meant for a fresh Raspberry Pi 4 and gets you to a working GhostHub without cloning the repo.
+- Streaming and Gallery layouts for photos and videos
+- Profiles with avatars, resume progress, and per-user history
+- Upload, download, rename, delete, and move actions
+- Categories, hidden folders, playlists, sorting, and search
+- Subtitles for video (`.srt .vtt .ass .ssa`), auto-converted via ffmpeg
+- TV casting to an HDMI display attached to the Pi
+- Sync watching and chat between connected viewers
+- Admin panel: updates, storage, Wi-Fi, cache, restart, logs, system status
+- Offline access-point mode
+- Optional remote access via Cloudflare Tunnel or a Tailscale/Headscale mesh
 
-### DIY: Install On The Supported Raspberry Pi OS Image
+## Supported Media
 
-Use the exact supported base OS:
+Plays in any modern browser without extra setup:
+
+```text
+Video    .mp4 (H.264/AAC), .webm
+Images   .jpg .jpeg .png .gif .webp  (.heic on Safari)
+Subs     .srt .vtt .ass .ssa  (text tracks auto-extracted via ffmpeg)
+```
+
+Plays through **[GhostStream](https://github.com/BleedingXiko/GhostStream)**, an optional companion transcoder that runs on a separate machine:
+
+```text
+.mkv .avi .mov .wmv .flv .ts .m2ts .mpg .vob
+HEVC / H.265 / AV1 / VP9 video
+AC3 / DTS / TrueHD / E-AC3 audio
+Anything above ~25 Mbps over remote links
+```
+
+GhostStream is **not bundled** and is **off by default**. Without it, files in the second list show a "No transcoding server connected" message instead of playing. Most phone recordings, screen captures, and downloaded `.mp4` files are in the first list and play directly.
+
+## Quick Start
+
+### Option 1 — Flash the prebuilt image (fastest)
+
+1. Download the GhostHub SD card image from the [ready-to-flash image release built on v5.0.1](https://github.com/BleedingXiko/GhostHub/releases/tag/B5).
+2. Flash it to a microSD card with [Raspberry Pi Imager](https://www.raspberrypi.com/software/) or balenaEtcher.
+3. Boot the Pi, connect your phone or laptop to the `GhostHub` Wi-Fi network, and open `http://ghosthub.local` (or `http://192.168.4.1`).
+
+### Option 2 — DIY install on stock Raspberry Pi OS
+
+Flash the exact supported base image with Raspberry Pi Imager v1.8.5:
 
 ```text
 2022-01-28-raspios-bullseye-armhf-lite
-```
-
-Download the trusted clean OS image from Raspberry Pi:
-
-```text
 https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip
 ```
 
-Use Raspberry Pi Imager v1.8.5 and open advanced options before flashing:
+In Imager's advanced options, set:
 
 ```text
 Hostname: ghosthub
 Username: ghost
 Enable SSH: yes
-Password: choose your own
-Wi-Fi: optional, only needed if you are not using Ethernet
+Password: (your choice)
 ```
 
-For the release installer path, SSH into the Pi from your computer.
-
-On macOS, Linux, or Windows PowerShell:
+SSH into the Pi, then run the installer:
 
 ```bash
 ssh ghost@ghosthub.local
-```
 
-After you are logged into the Pi, run these commands on the Pi:
-
-```bash
 curl -L -o install_ghosthub.sh \
-  https://github.com/BleedingXiko/GhostHub/releases/latest/download/install_ghosthub.sh
+  https://github.com/BleedingXiko/GhostHub/releases/download/v5.0.1/install_ghosthub.sh
 chmod +x install_ghosthub.sh
 sudo ./install_ghosthub.sh
 ```
 
-The installer downloads `Ghosthub_pi_github.zip` from GitHub Releases, installs system dependencies, configures the service, prepares USB/AP/HDMI support, and starts GhostHub.
+The installer downloads `Ghosthub_pi_github.zip` from GitHub Releases, installs system dependencies, configures the systemd service, prepares USB, access-point, and HDMI support, then starts GhostHub.
 
-If you cloned this repository and want to deploy local source instead, do not SSH into the Pi. Run the deploy CLI from your computer.
+### Option 3 — Deploy local source from your computer
 
-On macOS or Linux:
+If you cloned this repo and want to deploy your working tree to a Pi instead of installing a public release:
 
 ```bash
-./scripts/deploy_to_pi.sh
+./scripts/deploy_to_pi.sh        # macOS / Linux
+.\scripts\deploy_to_pi.ps1       # Windows PowerShell
 ```
 
-On Windows PowerShell:
+The deploy CLI builds a local `ghostpack` ZIP, uploads it to the Pi, and does not use GitHub Releases.
 
-```powershell
-.\scripts\deploy_to_pi.ps1
-```
+See [Quick Start](docs/QUICK_START.md), [Flash Image](docs/FLASH_GHOSTHUB_IMAGE.md), or [DIY Install](docs/DIY_INSTALL.md) for detailed setup instructions.
 
-The CLI offers Standard, Update, and Image Prep modes. It creates `venv/`, installs Python and JavaScript dependencies, builds the local `ghostpack` ZIP, uploads it from your computer, and never downloads app ZIPs from GitHub Releases.
-
-## What You Get
-
-- Browser-based photo and video browsing from USB drives or configured media folders.
-- Mobile, tablet, desktop, and HDMI kiosk experiences.
-- Upload, download, rename, delete, move, and organize media.
-- Streaming and Gallery browsing layouts.
-- Category discovery, hidden folders, playlists, sorting, search, and progress tracking.
-- Video playback with subtitles, thumbnails, resume progress, and browser-native controls.
-- TV casting to an HDMI display connected to the Pi.
-- Raspberry Pi access-point mode for offline use.
-- Optional remote access experiments with tunnels or secure mesh.
-- Admin tools for updates, storage, Wi-Fi, cache, restart, logs, and system status.
-
-## How GhostHub Runs
-
-GhostHub is a Python 3.9 + Flask/SPECTER backend with a modular ES frontend. It is packaged for Raspberry Pi but stays hackable as a normal source tree.
+## How It Runs
 
 ```text
 Raspberry Pi 4 + USB storage
@@ -121,136 +132,79 @@ Raspberry Pi 4 + USB storage
         v
 GhostHub service on port 5000
         |
-        +-- phone/tablet/desktop browser
+        +-- phone / tablet / desktop browser
         +-- HDMI kiosk / TV display
         +-- optional mesh or tunnel access
 ```
 
-## Install Options
-
-### Base Image
-
-Use this when you want the fastest path from blank SD card to working GhostHub.
-
-See [Flash The GhostHub Image](docs/FLASH_GHOSTHUB_IMAGE.md).
-
-### Release Installer
-
-Use this when the exact supported Raspberry Pi OS image is already installed:
-
-```text
-2022-01-28-raspios-bullseye-armhf-lite
-```
-
-```bash
-sudo ./install_ghosthub.sh --version v5.0.1
-```
-
-Install from a local release ZIP:
-
-```bash
-sudo ./install_ghosthub.sh --local-zip /path/to/Ghosthub_pi_github.zip
-```
-
-Compatibility local deploy mode still reads `/tmp/ghosthub_deploy.zip`:
-
-```bash
-sudo ./install_ghosthub.sh --local-only
-```
-
-See [Quick Start](docs/QUICK_START.md).
+GhostHub uses Python 3.9, Flask, and SPECTER on the backend; modular ES modules and RAGOT on the frontend; and SQLite for local state. It is packaged for Raspberry Pi, but the source tree remains a normal Flask project for local development.
 
 ## Updates
 
-GhostHub updates are published through [GitHub Releases](https://github.com/BleedingXiko/GhostHub/releases). The admin UI checks the latest `vX.Y.Z` tag, downloads the release installer, validates it, and schedules the update through `systemd-run`.
+Updates ship through [GitHub Releases](https://github.com/BleedingXiko/GhostHub/releases). The admin UI checks the latest `vX.Y.Z` release tag, downloads the installer, validates it, and schedules the update with `systemd-run`.
 
-Runtime state is preserved during updates:
+Updates preserve `instance/`, `venv/`, `headscale`, and `cloudflared`.
 
-- `instance/`
-- `venv/`
-- `headscale`
-- `cloudflared`
-
-Public release assets are:
-
+Public release assets:
 - `Ghosthub_pi_github.zip`
 - `install_ghosthub.sh`
 
-The ready-to-flash GhostHub SD card image is published separately by the maintainer. It is not produced by `scripts/ghostpack.py` and is not attached by the GitHub release workflow.
+The ready-to-flash SD card image is published separately by the maintainer. The GitHub release workflow does not build it.
 
 See [Release Process](docs/RELEASES.md).
 
+## Manual install flags
+
+```bash
+sudo ./install_ghosthub.sh --version v5.0.1                          # pin a release tag
+sudo ./install_ghosthub.sh --local-zip /path/to/Ghosthub_pi_github.zip   # install from a local zip
+sudo ./install_ghosthub.sh --local-only                              # use /tmp/ghosthub_deploy.zip
+```
+
 ## Development
 
-GhostHub targets Python 3.9. Use a Python 3.9 virtual environment so local tests match Raspberry Pi deployments.
-
-On macOS or Linux:
+GhostHub targets Python 3.9. Use a Python 3.9 virtual environment so local tests match Pi deployments.
 
 ```bash
 python3.9 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-cd static/js
-npm install
-cd ../..
+cd static/js && npm install && cd ../..
 python ghosthub.py
 ```
 
-On Windows PowerShell:
+On Windows PowerShell, use `py -3.9 -m venv venv` and `.\venv\Scripts\Activate.ps1`; the rest is the same with backslash paths.
 
-```powershell
-py -3.9 -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-cd static/js
-npm install
-cd ../..
-python ghosthub.py
-```
-
-Run validation.
-
-On macOS or Linux:
+Run the full test suite:
 
 ```bash
 ./venv/bin/python scripts/run_all_tests.py
 ```
 
-On Windows PowerShell:
-
-```powershell
-.\venv\Scripts\python.exe scripts\run_all_tests.py
-```
-
-Run focused backend/frontend tests.
-
-On macOS or Linux:
+Run a focused subset:
 
 ```bash
 ./venv/bin/python -m pytest tests/test_admin_routes.py -v
-cd static/js
-npm test
-cd ../..
-```
-
-On Windows PowerShell:
-
-```powershell
-.\venv\Scripts\python.exe -m pytest tests\test_admin_routes.py -v
-cd static\js
-npm test
-cd ..\..
+cd static/js && npm test && cd ../..
 ```
 
 ## Architecture
 
-- Backend routes and services use the `specter-runtime` package.
-- Frontend modules use the vendored RAGOT runtime at `static/js/libs/ragot.esm.min.js`.
-- SQLite stores app state in `instance/`.
+- Backend routes and services use the [`specter-runtime`](https://github.com/BleedingXiko/specter) package (Service / Controller / Handler primitives).
+- Frontend modules use the [RAGOT](https://github.com/BleedingXiko/RAGOT) runtime at `static/js/libs/ragot.esm.min.js`.
+- SQLite stores app state under `instance/`.
 - Raspberry Pi service setup is handled by `install_ghosthub.sh`.
 - Release ZIPs are built with `scripts/ghostpack.py --zip`.
 
-Start with [Architecture](docs/ARCHITECTURE.md) if you are changing internals.
+Start with [Architecture](docs/ARCHITECTURE.md) before changing internals.
+
+## Related Projects
+
+GhostHub uses three open-source companion projects:
+
+- **[SPECTER](https://github.com/BleedingXiko/specter)** — backend runtime for services, controllers, handlers, and the event bus. Installed from PyPI as `specter-runtime`.
+- **[RAGOT](https://github.com/BleedingXiko/RAGOT)** — frontend runtime for component lifecycle, module lifecycle, DOM updates, events, and sockets. Vendored as a git submodule under `static/js/ragot/`.
+- **[GhostStream](https://github.com/BleedingXiko/GhostStream)** — optional companion transcoder for `.mkv`, HEVC, AV1, DTS, and other browser-incompatible formats. Runs on a separate machine and is off by default.
 
 ## Documentation
 
@@ -271,20 +225,16 @@ Start with [Architecture](docs/ARCHITECTURE.md) if you are changing internals.
 
 ## Contributing
 
-Issues, fixes, docs, tests, Raspberry Pi validation, and release-readiness improvements are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening larger changes.
-
-For backend work, follow the existing SPECTER controller/service patterns. For frontend work, use the existing ES module structure and RAGOT runtime.
+Issues, fixes, docs, tests, Pi validation, and release-readiness work are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening larger changes. For backend work, follow the SPECTER controller and service patterns. For frontend work, use the existing ES module structure and the RAGOT runtime.
 
 ## Security
 
-Please do not post credentials, private media libraries, device logs with secrets, or private network details in public issues. See [SECURITY.md](SECURITY.md).
+Do not post credentials, private media, device logs with secrets, or private network details in public issues. See [SECURITY.md](SECURITY.md) for private vulnerability reporting.
 
 ## License
 
-New GhostHub source code is licensed under the GNU Affero General Public License v3.0. See [LICENSE](LICENSE).
-
-Older public GhostHub releases may remain available under the MIT License; this repository's current source tree is AGPL-3.0.
+GhostHub is licensed under the GNU Affero General Public License v3.0. See [LICENSE](LICENSE).
 
 ## Donations
 
-If GhostHub is useful to you, donations and sponsorships help support Raspberry Pi test hardware, maintenance time, and release infrastructure.
+If GhostHub is useful to you, donations and sponsorships help cover Raspberry Pi test hardware, maintenance time, and release infrastructure.

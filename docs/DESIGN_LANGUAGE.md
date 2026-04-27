@@ -22,12 +22,11 @@ GhostHub should feel like:
 - cinematic, not clinical
 - tactile, not flat
 - confident, not loud
-- self-hosted and capable, not hobby-project rough
 - fast on limited hardware, not over-designed
 
 Short version:
 
-> GhostHub should feel like capable self-hosted media software built for the real world, with dark immersive surfaces, sharp hierarchy, and clear control over a personal library.
+> Dark immersive surfaces, sharp hierarchy, and clear control over a personal library.
 
 ### 1.2 Brand traits
 
