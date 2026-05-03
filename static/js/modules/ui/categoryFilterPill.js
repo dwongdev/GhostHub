@@ -117,7 +117,7 @@ export function handlePillClear() {
                 } else if (categoryId) {
                     console.log(`[Pill] Stepping back to category root: ${categoryId}`);
                     if (categoryId.startsWith('auto::')) {
-                        const fallbackName = formatAutoCategoryName(categoryId);
+                        const fallbackName = resolveAutoCategoryDisplayName(layoutModule, categoryId);
                         layoutModule.setCategoryFilter(categoryId, fallbackName);
                     } else {
                         layoutModule.setCategoryFilter(categoryId);
@@ -141,7 +141,7 @@ export function handlePillClear() {
                     layoutModule.setCategoryFilter(null, null);
                 } else {
                     console.log(`[Pill] Stepping back to parent category: ${parentId}`);
-                    layoutModule.setCategoryFilter(parentId, formatAutoCategoryName(parentId));
+                    layoutModule.setCategoryFilter(parentId, resolveAutoCategoryDisplayName(layoutModule, parentId));
                 }
                 return;
             }
@@ -153,6 +153,49 @@ export function handlePillClear() {
             layoutModule.setCategoryFilter(null, null);
         }
     }
+}
+
+/**
+ * Persistent id→display-name cache. The layouts overwrite categoriesData with
+ * a single entry while a filter is active, so the parent's display name (which
+ * encodes the user-defined drive label) would otherwise be lost when stepping
+ * back through the pill. We seed this cache from every category fetch and use
+ * it as the source of truth for auto-category step-back labels.
+ */
+const _categoryNameCache = new Map();
+
+export function rememberCategoryNames(categories) {
+    if (!Array.isArray(categories)) return;
+    for (const category of categories) {
+        if (!category) continue;
+        const id = category.id || category.category_id;
+        const name = category.name || category.category_name;
+        if (id && name) _categoryNameCache.set(id, name);
+    }
+}
+
+export function rememberCategoryName(id, name) {
+    if (id && name) _categoryNameCache.set(id, name);
+}
+
+/**
+ * Resolve the display name for an auto:: category id, preferring the
+ * server-provided name (which carries the renamed-USB label) from the
+ * persistent cache. Falls back to the active layout's categoriesData and
+ * finally to a title-cased leaf.
+ */
+function resolveAutoCategoryDisplayName(layoutModule, categoryId) {
+    if (!categoryId) return null;
+    const cached = _categoryNameCache.get(categoryId);
+    if (cached) return cached;
+    try {
+        const categories = (typeof layoutModule?.getCategoriesData === 'function')
+            ? layoutModule.getCategoriesData()
+            : null;
+        const resolved = resolveCategoryName(categoryId, categories || [], null);
+        if (resolved) return resolved;
+    } catch (_) { /* fall through */ }
+    return formatAutoCategoryName(categoryId);
 }
 
 function formatAutoCategoryName(categoryId) {

@@ -777,7 +777,9 @@ export {
     loadAndRender,
     setCategoryFilter,
     setParentFilter,
-    setSubfolderFilterAction
+    setSubfolderFilterAction,
+    getCategoriesData,
+    getCategoryIdFilter
 };
 
 

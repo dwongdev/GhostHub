@@ -28,6 +28,7 @@ import {
 
 import { getShowHiddenHeaders } from '../../../utils/showHiddenManager.js';
 import { cachedFetch } from '../../../utils/requestCache.js';
+import { rememberCategoryNames } from '../../ui/categoryFilterPill.js';
 
 /**
  * Fetch hardware tier from backend
@@ -78,6 +79,7 @@ export async function fetchCategories(forceRefresh = false) {
         const data = await response.json();
         const categories = data.categories || [];
         setCategoriesData(categories);
+        rememberCategoryNames(categories);
         return categories;
     } catch (e) {
         console.error('[GalleryLayout] Error fetching categories:', e);

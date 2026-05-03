@@ -1290,7 +1290,8 @@ export {
     setCategoryNameFilter,
     setSubfolderFilter,
     setParentNameFilter,
-    setCategoryIdsFilter
+    setCategoryIdsFilter,
+    getCategoriesData
 };
 
 export { getGridMode } from './state.js';

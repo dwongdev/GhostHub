@@ -16,6 +16,7 @@ import {
     ensureProgressDBReady as ensureDBReady
 } from '../../../utils/layoutUtils.js';
 import { isPendingDeletion } from '../../media/progressPersistence.js';
+import { rememberCategoryNames } from '../../ui/categoryFilterPill.js';
 
 import {
     MEDIA_PER_PAGE,
@@ -123,6 +124,7 @@ export async function fetchCategories(
     }
 
     setCategoriesData(categories);
+    rememberCategoryNames(categories);
     if (pruneMissingCategories) {
         pruneCategoryMediaCache(categories.map((category) => category?.id).filter(Boolean));
     }
