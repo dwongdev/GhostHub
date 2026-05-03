@@ -82,7 +82,7 @@ After you are logged into the Pi, run these commands on the Pi:
 
 ```bash
 curl -L -o install_ghosthub.sh \
-  https://github.com/BleedingXiko/GhostHub/releases/download/v5.0.1/install_ghosthub.sh
+  https://github.com/BleedingXiko/GhostHub/releases/download/v5.0.2/install_ghosthub.sh
 chmod +x install_ghosthub.sh
 sudo ./install_ghosthub.sh
 ```
@@ -196,5 +196,5 @@ For manual pinned installs:
 Run this on the Pi after SSH:
 
 ```bash
-sudo ./install_ghosthub.sh --version v5.0.1
+sudo ./install_ghosthub.sh --version v5.0.2
 ```
