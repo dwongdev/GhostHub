@@ -707,7 +707,17 @@ export async function loadAndRender(forceRefresh = false, options = {}) {
         if (secondaryTasks.length > 0) await Promise.all(secondaryTasks);
         if (signal.aborted) return;
 
-        await fetchAllCategoryMedia(forceRefresh, null, {
+        // Refresh each category row in place as its cache fills, so skeleton
+        // cards swap to real cards progressively without a final global
+        // _rebuildRows tearing down every VirtualScroller (which produced the
+        // visible "two-jump" flicker on every filter step-back).
+        const onCategoryLoaded = (category) => {
+            if (!_module._rowsComp || !category?.id) return;
+            const isSingleView = getCategoryIdFilter() !== null || getSubfolderFilter() !== null;
+            if (isSingleView) return;
+            try { _module._rowsComp.refreshCategoryRow(category.id); } catch (_) { /* ignore */ }
+        };
+        await fetchAllCategoryMedia(forceRefresh, onCategoryLoaded, {
             signal,
             bypassClientCache: options.bypassMediaClientCache === true
         });
@@ -791,6 +801,19 @@ export async function loadAndRender(forceRefresh = false, options = {}) {
                         categoryMediaCache: next,
                         isLoading: false
                     });
+                    // syncRowsComponentFromStreamingState's diff only pushes
+                    // categoryMediaCache through the secondary-rows path, which
+                    // doesn't touch category rows. Refresh the rows whose
+                    // skeleton state we just cleared so they don't stay stuck.
+                    if (_module._rowsComp) {
+                        const seen = new Set();
+                        for (const key of Object.keys(next)) {
+                            const id = key.split('|sf:')[0];
+                            if (!id || seen.has(id)) continue;
+                            seen.add(id);
+                            try { _module._rowsComp.refreshCategoryRow(id); } catch (_) { /* ignore */ }
+                        }
+                    }
                 }
             }
         }
@@ -803,7 +826,8 @@ function syncRowsComponentFromStreamingState({
 } = {}) {
     if (!_module._rowsComp) return;
     const s = streamingState.state;
-    _module._rowsComp.setState({
+    const current = _module._rowsComp.state || {};
+    const desired = {
         categoriesData: s.categoriesData || [],
         continueWatchingData: s.continueWatchingData || [],
         whatsNewData: s.whatsNewData || [],
@@ -815,7 +839,27 @@ function syncRowsComponentFromStreamingState({
         categoryIdFilter: s.categoryIdFilter,
         subfolderFilter: s.subfolderFilter,
         isLoading,
-    });
+    };
+
+    // Shallow diff: only forward keys whose value reference actually changed.
+    // This keeps the post-fetch sync in the secondary-only path (CW/WN/cache)
+    // when structural keys (categoriesData, filters) haven't changed since the
+    // first setState in loadAndRender, avoiding the visible "two-jump" flicker
+    // caused by a second full _rebuildRows tearing down all VS instances.
+    const patch = {};
+    for (const key of Object.keys(desired)) {
+        if (current[key] !== desired[key]) patch[key] = desired[key];
+    }
+    // isLoading only matters structurally when categoriesData is empty (it
+    // toggles between loading skeletons and the "no media yet" message). With
+    // categories populated, the flag is cosmetic — drop it to avoid forcing a
+    // full _rebuildRows on every post-fetch sync.
+    if ('isLoading' in patch && (desired.categoriesData?.length || 0) > 0) {
+        delete patch.isLoading;
+    }
+    if (Object.keys(patch).length > 0) {
+        _module._rowsComp.setState(patch);
+    }
     requestAnimationFrame(() => refreshLazyLoader());
 }
 

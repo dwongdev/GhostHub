@@ -246,7 +246,10 @@ export class StreamingRowsComponent extends Component {
             'whatsNewData',
             'continueWatchingLoading',
             'whatsNewLoading',
-            'categoryMediaCache'
+            'categoryMediaCache',
+            // videoProgressMap is unread in this component; treat it as a
+            // no-op secondary key so post-fetch syncs don't flicker rows.
+            'videoProgressMap'
         ]);
         const isSecondaryOnly = changedKeys.length > 0 && changedKeys.every(k => secondaryOnlyKeys.has(k));
 
