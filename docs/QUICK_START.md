@@ -81,8 +81,12 @@ ssh-keygen -R <pi-ip-address>
 After you are logged into the Pi, run these commands on the Pi:
 
 ```bash
+APP_TAG="$(curl -fsSL https://api.github.com/repos/BleedingXiko/GhostHub/releases \
+  | sed -n 's/.*"tag_name": "\(v[0-9][0-9.]*\)".*/\1/p' \
+  | head -n 1)"
+test -n "$APP_TAG" || { echo "Could not resolve latest GhostHub app release tag"; exit 1; }
 curl -L -o install_ghosthub.sh \
-  https://github.com/BleedingXiko/GhostHub/releases/download/v5.0.2/install_ghosthub.sh
+  "https://github.com/BleedingXiko/GhostHub/releases/download/${APP_TAG}/install_ghosthub.sh"
 chmod +x install_ghosthub.sh
 sudo ./install_ghosthub.sh
 ```
@@ -196,5 +200,5 @@ For manual pinned installs:
 Run this on the Pi after SSH:
 
 ```bash
-sudo ./install_ghosthub.sh --version v5.0.2
+sudo ./install_ghosthub.sh --version vX.Y.Z
 ```

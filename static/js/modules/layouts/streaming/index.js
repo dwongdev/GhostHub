@@ -754,9 +754,16 @@ export async function loadAndRender(forceRefresh = false, options = {}) {
         }
 
         // Row mode — unmount grid, mount rows (if not already), push data into rows component.
+        // Reveal/stop-reveal changes the category set and can leave individual
+        // row shells stuck if the progressive row refresh misses one. After the
+        // fresh visibility-aware data is fetched, remount rows once so every
+        // skeleton is rebuilt from current cache rather than recycled state.
+        if (refreshCategoryList) {
+            _module.unmountRows();
+        }
         const hadGridMounted = _module.unmountGrid();
         const rowsMountedOrRecovered = _module.mountRows();
-        if (hadGridMounted || rowsMountedOrRecovered) {
+        if (hadGridMounted || rowsMountedOrRecovered || refreshCategoryList) {
             // Reset lazy loader bookkeeping when row/grid surface swaps.
             // This prevents stale observed-node state from suppressing thumbnail loads
             // after remounts.

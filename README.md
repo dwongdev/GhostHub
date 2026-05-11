@@ -4,14 +4,14 @@
 
 <p>
   <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg"></a>
-  <a href="https://github.com/BleedingXiko/GhostHub/releases/tag/v5.0.2"><img alt="Latest app release: v5.0.2" src="https://img.shields.io/badge/app%20release-v5.0.2-blue"></a>
+  <a href="https://github.com/BleedingXiko/GhostHub/releases"><img alt="Latest app release tag" src="https://img.shields.io/github/v/tag/BleedingXiko/GhostHub?filter=v*&label=app%20release&color=blue"></a>
   <a href="https://github.com/BleedingXiko/GhostHub/releases/tag/B5"><img alt="Ready-to-flash image built on v5.0.1" src="https://img.shields.io/badge/ready--to--flash%20image-built%20on%20v5.0.1-success?logo=raspberrypi&logoColor=white"></a>
   <img alt="Platform" src="https://img.shields.io/badge/platform-Raspberry%20Pi%204-c51a4a?logo=raspberrypi&logoColor=white">
   <img alt="Status" src="https://img.shields.io/badge/status-active-brightgreen">
 </p>
 
 <p>
-  <a href="https://github.com/BleedingXiko/GhostHub/releases/tag/v5.0.2"><strong>Latest Release</strong></a>
+  <a href="https://github.com/BleedingXiko/GhostHub/releases"><strong>App Releases</strong></a>
   · <a href="docs/QUICK_START.md"><strong>Quick Start</strong></a>
   · <a href="docs/FLASH_GHOSTHUB_IMAGE.md"><strong>Flash Image</strong></a>
   · <a href="docs/DIY_INSTALL.md"><strong>DIY Install</strong></a>
@@ -76,7 +76,7 @@ GhostStream is **not bundled** and is **off by default**. Without it, files in t
 
 ### Option 1 — Flash the prebuilt image (fastest)
 
-1. Download the GhostHub SD card image from the [ready-to-flash image release built on v5.0.2](https://github.com/BleedingXiko/GhostHub/releases/tag/B5).
+1. Download the GhostHub SD card image from the [ready-to-flash image release built on v5.0.1](https://github.com/BleedingXiko/GhostHub/releases/tag/B5).
 2. Flash it to a microSD card with [Raspberry Pi Imager](https://www.raspberrypi.com/software/) or balenaEtcher.
 3. Boot the Pi, connect your phone or laptop to the `GhostHub` Wi-Fi network, and open `http://ghosthub.local` (or `http://192.168.4.1`).
 
@@ -103,11 +103,17 @@ SSH into the Pi, then run the installer:
 ```bash
 ssh ghost@ghosthub.local
 
+APP_TAG="$(curl -fsSL https://api.github.com/repos/BleedingXiko/GhostHub/releases \
+  | sed -n 's/.*"tag_name": "\(v[0-9][0-9.]*\)".*/\1/p' \
+  | head -n 1)"
+test -n "$APP_TAG" || { echo "Could not resolve latest GhostHub app release tag"; exit 1; }
 curl -L -o install_ghosthub.sh \
-  https://github.com/BleedingXiko/GhostHub/releases/download/v5.0.2/install_ghosthub.sh
+  "https://github.com/BleedingXiko/GhostHub/releases/download/${APP_TAG}/install_ghosthub.sh"
 chmod +x install_ghosthub.sh
 sudo ./install_ghosthub.sh
 ```
+
+The `APP_TAG` variable should point at the newest app release tag (`vX.Y.Z`). Image tags such as `B5` are published separately.
 
 The installer downloads `Ghosthub_pi_github.zip` from GitHub Releases, installs system dependencies, configures the systemd service, prepares USB, access-point, and HDMI support, then starts GhostHub.
 
@@ -156,7 +162,7 @@ See [Release Process](docs/RELEASES.md).
 ## Manual install flags
 
 ```bash
-sudo ./install_ghosthub.sh --version v5.0.2                          # pin a release tag
+sudo ./install_ghosthub.sh --version vX.Y.Z                          # pin a specific app release tag
 sudo ./install_ghosthub.sh --local-zip /path/to/Ghosthub_pi_github.zip   # install from a local zip
 sudo ./install_ghosthub.sh --local-only                              # use /tmp/ghosthub_deploy.zip
 ```

@@ -11,6 +11,11 @@ Canonical version locations:
 
 Both must contain the same version before release.
 
+Public app install snippets should not hardcode the current app release tag. They
+resolve the newest `vX.Y.Z` app release from GitHub Releases so separate image
+tags such as `B5` do not affect the app install lane. Ready-to-flash image docs
+should keep exact "built on vX.Y.Z" provenance for each image tag.
+
 Use:
 
 - Patch for bug fixes and documentation-only release polish

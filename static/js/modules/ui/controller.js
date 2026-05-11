@@ -9,7 +9,7 @@ import {
     initTunnelModal,
     openTunnelModal as importedOpenTunnelModal
 } from '../config/index.js';
-import { openFileManager as importedOpenFileManager } from '../admin/files.js';
+import { openFileManager as importedOpenFileManager, openUploadStatus as importedOpenUploadStatus } from '../admin/files.js';
 import { Module, createElement, css, $, $$ } from '../../libs/ragot.esm.min.js';
 import { getAppState, setAppState } from '../../utils/appStateUtils.js';
 import { setupLayoutNavigation, cleanupLayoutNavigation } from '../../utils/layoutUtils.js';
@@ -195,6 +195,7 @@ function enableNavigationControls() {
 const openConfigModal = importedOpenConfigModal;
 const openTunnelModal = importedOpenTunnelModal;
 const openFileManager = importedOpenFileManager;
+const openUploadStatus = importedOpenUploadStatus;
 
 function initUIController() {
     if (!uiControllerLifecycle) {
@@ -218,6 +219,7 @@ export {
     openConfigModal,
     openTunnelModal,
     openFileManager,
+    openUploadStatus,
     updateSyncToggleButton
 };
 

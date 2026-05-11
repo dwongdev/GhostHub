@@ -6,7 +6,7 @@ labels: bug
 ---
 
 **GhostHub version**
-e.g. v5.0.1 (see Settings → System, or `app/version.py`)
+e.g. vX.Y.Z (see Settings → System, or `app/version.py`)
 
 **Install method**
 - [ ] Flashed prebuilt image

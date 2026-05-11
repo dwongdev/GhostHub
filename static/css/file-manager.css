@@ -714,11 +714,27 @@
     display: none;
 }
 
-.fm-selected-files h4 {
+.fm-upload-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+}
+
+.fm-upload-list-header h4,
+.fm-staged-uploads h4 {
     font-size: 0.85rem;
     font-weight: 600;
-    margin: 0 0 var(--space-sm) 0;
+    margin: 0;
     color: var(--text-secondary);
+}
+
+.fm-upload-list-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    flex-shrink: 0;
 }
 
 .fm-selected-files ul {
@@ -737,6 +753,23 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     font-size: 0.85rem;
     gap: var(--space-sm);
+}
+
+.fm-upload-file-row {
+    min-height: 38px;
+}
+
+.fm-upload-file-checkbox {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    accent-color: var(--accent-color);
+}
+
+.fm-upload-file-remove {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
 }
 
 .fm-file-info {
@@ -829,6 +862,67 @@
     border-radius: var(--radius-sm);
     margin-bottom: var(--space-xs);
     font-weight: 500;
+    padding: var(--space-xs) var(--space-sm) !important;
+}
+
+/* Staged upload groups */
+.fm-staged-uploads {
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-md);
+}
+
+.fm-staged-uploads.hidden {
+    display: none;
+}
+
+.fm-staged-uploads ul {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-sm) 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.fm-staged-upload-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    border-radius: var(--radius-sm);
+    background: rgba(var(--accent-color-rgb), 0.08);
+    border: 1px solid rgba(var(--accent-color-rgb), 0.16);
+}
+
+.fm-staged-upload-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.fm-staged-upload-target {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fm-staged-upload-meta,
+.fm-staged-upload-preview {
+    color: var(--text-tertiary);
+    font-size: 0.78rem;
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fm-staged-upload-remove {
+    flex-shrink: 0;
 }
 
 /* Upload Progress */
@@ -913,6 +1007,15 @@
     margin-left: auto;
 }
 
+.fm-result-target {
+    color: var(--text-tertiary);
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
 /* Modal Header with Icon */
 .file-manager-modal-content .modal__header h2,
 .file-manager-modal-content .modal-header h2 {
@@ -928,7 +1031,18 @@
 }
 
 .file-manager-modal-content .modal__footer .btn {
-    flex: 0 1 180px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    flex: 0 1 160px;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.file-manager-modal-content .modal__footer .btn svg {
+    flex-shrink: 0;
 }
 
 .file-manager-modal-content #fm-upload-btn:disabled {
@@ -1606,6 +1720,38 @@ body.photo-viewer-open #media-viewer .quick-actions-btn-container {
     .fm-drop-zone-content svg {
         width: 36px;
         height: 36px;
+    }
+
+    .fm-upload-list-header,
+    .fm-staged-upload-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .fm-upload-list-actions {
+        width: 100%;
+    }
+
+    .fm-upload-list-actions .btn,
+    .fm-staged-upload-remove {
+        flex: 1;
+    }
+
+    .fm-selected-files li.fm-upload-file-row {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+    }
+
+    .fm-selected-files li.fm-upload-file-row .fm-file-size {
+        grid-column: 2;
+        justify-self: start;
+        margin-left: calc(16px + var(--space-sm));
+    }
+
+    .fm-selected-files li.fm-upload-file-row .fm-upload-file-remove {
+        grid-column: 3;
+        grid-row: 1 / span 2;
     }
 
     .fm-media-item {

@@ -18,10 +18,14 @@ import {
     uploadFiles as uploadFilesOptimized,
     cancelAllUploads as cancelUploadsShared,
     resetUploadState,
+    resetDuplicateState,
+    getDuplicateState,
+    isUploadCancelled,
     formatBytes as formatBytesShared,
     getCurrentUploadSession,
     updateSessionCallbacks
 } from '../../utils/uploadManager.js';
+import { showDuplicateWarning } from '../../utils/duplicateWarning.js';
 import {
     uploadIcon, folderClosedIcon, folderOpenIcon, hardDriveIcon, usbIcon,
     plusIcon, checkIcon, refreshIcon, cancelIcon, eyeIcon, chevronDownIcon,
@@ -319,6 +323,8 @@ class FileManagerModule extends Module {
         this.selectedFolder = '';
         this.mediaFiles = [];
         this.selectedFiles = [];
+        this.selectedUploadFileIndices = new Set();
+        this.stagedUploads = [];
         this.isUploading = false;
         this.revealHiddenActive = false;
         this.revealHiddenExpiry = null;
@@ -519,8 +525,18 @@ class FileManagerModule extends Module {
                 createElement('button', { id: 'fm-select-folder-btn', className: 'btn btn--sm' }, createIcon(ICONS.FOLDER_OPEN), ' Select Folder')
             ),
             createElement('div', { id: 'fm-selected-files', className: 'fm-selected-files hidden' },
-                createElement('h4', { textContent: 'Selected Files:' }),
+                createElement('div', { className: 'fm-upload-list-header' },
+                    createElement('h4', { textContent: 'Files to Stage' }),
+                    createElement('div', { className: 'fm-upload-list-actions' },
+                        createElement('button', { id: 'fm-upload-select-all-btn', className: 'btn btn--sm', type: 'button', textContent: 'Select All' }),
+                        createElement('button', { id: 'fm-upload-clear-selection-btn', className: 'btn btn--sm', type: 'button', textContent: 'Clear' })
+                    )
+                ),
                 createElement('ul', { id: 'fm-file-list' })
+            ),
+            createElement('div', { id: 'fm-staged-uploads', className: 'fm-staged-uploads hidden' },
+                createElement('h4', { textContent: 'Staged Uploads' }),
+                createElement('ul', { id: 'fm-staged-list' })
             )
         ]);
 
@@ -541,12 +557,13 @@ class FileManagerModule extends Module {
         const body = createElement('div', { className: 'modal__body file-manager-body' });
         append(body, [drivesSection, folderSection, mediaBrowserSection, uploadSection, progressSection, resultsSection]);
 
-        const uploadBtn = createElement('button', { id: 'fm-upload-btn', className: 'btn btn--primary', disabled: true }, createIcon(ICONS.UPLOAD), ' Upload Files');
+        const uploadBtn = createElement('button', { id: 'fm-upload-btn', className: 'btn btn--primary', disabled: true }, createIcon(ICONS.UPLOAD), ' Stage to Selected Folder');
+        const startUploadBtn = createElement('button', { id: 'fm-start-upload-btn', className: 'btn btn--primary hidden', disabled: true }, createIcon(ICONS.UPLOAD), ' Start Uploads');
         const cancelUploadBtn = createElement('button', { id: 'fm-cancel-upload-btn', className: 'btn btn--danger hidden' }, createIcon(ICONS.CANCEL), ' Cancel Upload');
         const cancelBtn = createElement('button', { id: 'fm-cancel-btn', className: 'btn', textContent: 'Close' });
 
         const footer = createElement('div', { className: 'modal__footer' });
-        append(footer, [uploadBtn, cancelUploadBtn, cancelBtn]);
+        append(footer, [uploadBtn, startUploadBtn, cancelUploadBtn, cancelBtn]);
 
         append(modalContent, [header, body, footer]);
         append(modal, modalContent);
@@ -580,8 +597,41 @@ class FileManagerModule extends Module {
         this.on(dropZone, 'drop', (e) => { e.preventDefault(); dropZone.classList.remove('fm-drop-zone-active'); this._handleDroppedItems(e.dataTransfer); });
         this.on(m('fm-file-input'), 'change', (e) => this._handleFiles(e.target.files, false));
         this.on(m('fm-folder-input'), 'change', (e) => this._handleFiles(e.target.files, true));
-        this.on(m('fm-upload-btn'), 'click', () => this._uploadFiles());
+        this.on(m('fm-upload-select-all-btn'), 'click', () => this._selectAllPendingUploadFiles(true));
+        this.on(m('fm-upload-clear-selection-btn'), 'click', () => this._selectAllPendingUploadFiles(false));
+        this.on(m('fm-upload-btn'), 'click', () => this._stageSelectedFiles());
+        this.on(m('fm-start-upload-btn'), 'click', () => this._startStagedUploads());
         this.on(m('fm-cancel-upload-btn'), 'click', () => cancelUploadsShared());
+        this.on(m('fm-file-list'), 'change', (e) => {
+            const checkbox = e.target.closest('.fm-upload-file-checkbox');
+            if (!checkbox) return;
+            const idx = Number.parseInt(checkbox.dataset.index, 10);
+            if (!Number.isFinite(idx)) return;
+            if (checkbox.checked) this.selectedUploadFileIndices.add(idx);
+            else this.selectedUploadFileIndices.delete(idx);
+            this._renderPendingUploadFiles();
+            this._updateUploadControls();
+        });
+        this.on(m('fm-file-list'), 'input', (e) => {
+            const input = e.target.closest('.fm-file-rename-input');
+            if (!input) return;
+            const idx = Number.parseInt(input.dataset.index, 10);
+            if (Number.isFinite(idx) && this.selectedFiles[idx]) {
+                this.selectedFiles[idx].customFilename = input.value.trim();
+            }
+        });
+        this.on(m('fm-file-list'), 'click', (e) => {
+            const removeBtn = e.target.closest('.fm-upload-file-remove');
+            if (!removeBtn) return;
+            const idx = Number.parseInt(removeBtn.dataset.index, 10);
+            if (Number.isFinite(idx)) this._removePendingUploadFile(idx);
+        });
+        this.on(m('fm-staged-list'), 'click', (e) => {
+            const removeBtn = e.target.closest('.fm-staged-upload-remove');
+            if (!removeBtn) return;
+            const idx = Number.parseInt(removeBtn.dataset.index, 10);
+            if (Number.isFinite(idx)) this._unstageBatch(idx);
+        });
 
         const revealBtn = m('fm-reveal-hidden-btn');
         const revealDropdown = m('fm-reveal-hidden-dropdown');
@@ -649,7 +699,8 @@ class FileManagerModule extends Module {
 
     // ── Open/close ────────────────────────────────────────────────────────
 
-    open(manageMode = false) {
+    open(manageMode = false, options = {}) {
+        const statusOnly = options.statusOnly === true;
         if (!this.modal) {
             this.modal = this._buildModal();
             append(document.body, this.modal);
@@ -658,9 +709,12 @@ class FileManagerModule extends Module {
 
         this._returnFocusEl = document.activeElement;
 
-        this.manageMode = manageMode;
+        this.manageMode = manageMode && !statusOnly;
         this.mediaFiles = [];
         this.selectedFiles = [];
+        this.selectedUploadFileIndices.clear();
+        this.stagedUploads = [];
+        this.isUploading = false;
         this.drives = [];
         this.selectedDrive = null;
         this.selectedFolder = '';
@@ -670,24 +724,43 @@ class FileManagerModule extends Module {
         const titleEl = this.modal.querySelector('.modal__header h2');
         if (titleEl) {
             clear(titleEl);
-            if (manageMode) {
+            if (statusOnly) {
+                titleEl.textContent = 'Upload Status';
+            } else if (manageMode) {
                 titleEl.textContent = 'Manage Content';
             } else {
                 titleEl.textContent = 'File Manager';
             }
         }
+        const driveHeaderEl = this.modal.querySelector('.fm-section h3');
+        if (driveHeaderEl) {
+            driveHeaderEl.textContent = statusOnly ? 'Current Upload' : 'Select Storage Drive';
+        }
         const revealContainer = m('fm-reveal-hidden-container');
         if (revealContainer) {
-            revealContainer.classList.toggle('hidden', !manageMode);
-            if (manageMode) this._checkRevealHiddenStatus();
+            revealContainer.classList.toggle('hidden', !this.manageMode);
+            if (this.manageMode) this._checkRevealHiddenStatus();
         }
+        m('fm-drives-list').innerHTML = '<div class="fm-loading">Loading drives...</div>';
+        m('fm-results-list').innerHTML = '';
         m('fm-folder-section').style.display = 'none';
+        m('fm-media-browser-section').style.display = 'none';
         m('fm-upload-section').style.display = 'none';
         m('fm-selected-files').classList.add('hidden');
+        m('fm-staged-uploads').classList.add('hidden');
         m('fm-upload-progress').classList.add('hidden');
         m('fm-upload-results').classList.add('hidden');
         m('fm-upload-btn').disabled = true;
+        m('fm-upload-btn').classList.remove('hidden');
+        m('fm-start-upload-btn').disabled = true;
+        m('fm-start-upload-btn').classList.add('hidden');
+        if (statusOnly) {
+            m('fm-upload-btn').classList.add('hidden');
+        }
         m('fm-file-input').value = '';
+        m('fm-folder-input').value = '';
+        this._renderPendingUploadFiles();
+        this._renderStagedUploads();
         this.modal.classList.remove('hidden');
 
         // Reconnect to background upload session if any
@@ -697,6 +770,7 @@ class FileManagerModule extends Module {
             m('fm-upload-progress').classList.remove('hidden');
             m('fm-upload-results').classList.add('hidden');
             m('fm-upload-btn').classList.add('hidden');
+            m('fm-start-upload-btn').classList.add('hidden');
             m('fm-cancel-upload-btn').classList.remove('hidden');
             const pct = session.totalBytes > 0 ? Math.round((session.uploadedBytes / session.totalBytes) * 100) : 0;
             const fill = m('fm-progress-fill');
@@ -714,17 +788,35 @@ class FileManagerModule extends Module {
                 }
             );
         } else if (session?.results && (session.results.success > 0 || session.results.failed > 0)) {
+            m('fm-upload-progress').classList.remove('hidden');
+            m('fm-progress-fill').style.width = '100%';
+            m('fm-progress-text').textContent = `Upload complete: ${session.results.success} succeeded, ${session.results.failed} failed`;
             m('fm-upload-results').classList.remove('hidden');
             const log = session.results.log || [];
             m('fm-results-list').innerHTML = log.slice(0, 20).map(r => `<li class="${r.success ? 'fm-result-success' : 'fm-result-error'}">${r.success ? ICONS.CHECK : '✗'} <span>${escapeHtml(r.filename)}</span> <span class="fm-result-message">${escapeHtml(r.success ? 'Uploaded' : (r.error || 'Failed'))}</span></li>`).join('');
             if (log.length > 20) m('fm-results-list').innerHTML += `<li class="fm-result-more">... and ${log.length - 20} more files</li>`;
         }
 
-        this._loadDrives();
-        this._startUsbPolling();
+        if (!statusOnly) {
+            this._loadDrives();
+            this._startUsbPolling();
+        } else {
+            this._stopUsbPolling();
+            this._drivesRequestId += 1;
+            const drivesList = m('fm-drives-list');
+            if (drivesList) {
+                clear(drivesList);
+                append(drivesList, createElement('div', {
+                    className: 'fm-empty fm-upload-status-empty',
+                    textContent: session ? 'Upload details are shown below.' : 'No active upload.'
+                }));
+            }
+        }
         this._focusTrap?.deactivate({ restoreFocus: false });
         this._focusTrap = createFocusTrap($('.file-manager-modal-content', this.modal) || this.modal, {
-            initialFocus: () => document.getElementById('fm-folder-search') || document.getElementById('fm-refresh-drives') || document.getElementById('file-manager-close-btn'),
+            initialFocus: () => statusOnly
+                ? (session?.isRunning ? document.getElementById('fm-cancel-upload-btn') : document.getElementById('file-manager-close-btn'))
+                : (document.getElementById('fm-folder-search') || document.getElementById('fm-refresh-drives') || document.getElementById('file-manager-close-btn')),
             returnFocusTo: this._returnFocusEl
         });
         requestAnimationFrame(() => this._focusTrap?.activate());
@@ -749,6 +841,8 @@ class FileManagerModule extends Module {
         this.selectedFolder = '';
         this.mediaFiles = [];
         this.selectedFiles = [];
+        this.selectedUploadFileIndices.clear();
+        this.stagedUploads = [];
     }
 
     destroy() {
@@ -894,7 +988,7 @@ class FileManagerModule extends Module {
             document.getElementById('fm-upload-section').style.display = 'block';
         }
         this._loadFolders(drivePath);
-        this._updateUploadButton();
+        this._updateUploadControls();
         scheduleAutofocus(document.getElementById('fm-folder-search'));
     }
 
@@ -984,6 +1078,7 @@ class FileManagerModule extends Module {
                 onToggleHide: this.manageMode ? (params) => this._handleFolderHideToggle(params) : null,
                 onSelect: ({ relativePath, fullPath }) => {
                     this.selectedFolder = relativePath;
+                    this._updateUploadControls();
                     if (this.manageMode) {
                         const pathToLoad = (fullPath === 'root' || !fullPath) ? drivePath : fullPath;
                         this._loadMediaFiles(pathToLoad);
@@ -991,6 +1086,7 @@ class FileManagerModule extends Module {
                 }
             });
             this.selectedFolder = this._folderTreeApi.getSelected().relativePath;
+            this._updateUploadControls();
             const searchInput = document.getElementById('fm-folder-search');
             const searchClear = document.getElementById('fm-folder-search-clear');
             if (searchInput) searchInput.value = '';
@@ -1303,68 +1399,331 @@ class FileManagerModule extends Module {
             list.push({ file, relativePath });
         }
         this._processSelectedFiles(list);
+        const input = document.getElementById(isFolder ? 'fm-folder-input' : 'fm-file-input');
+        if (input) input.value = '';
     }
 
     _processSelectedFiles(fileList) {
-        this.selectedFiles = fileList.map(f => ({ ...f, customFilename: f.customFilename || f.file.name.substring(0, f.file.name.lastIndexOf('.')) || f.file.name }));
+        const startIndex = this.selectedFiles.length;
+        const nextFiles = fileList.map(f => ({
+            ...f,
+            customFilename: f.customFilename || f.file.name.substring(0, f.file.name.lastIndexOf('.')) || f.file.name
+        }));
+        this.selectedFiles.push(...nextFiles);
+        nextFiles.forEach((_file, offset) => this.selectedUploadFileIndices.add(startIndex + offset));
+        this._renderPendingUploadFiles();
+        this._updateUploadControls();
+    }
+
+    _getPendingUploadSelectionCount() {
+        let count = 0;
+        this.selectedUploadFileIndices.forEach(index => {
+            if (this.selectedFiles[index]) count++;
+        });
+        return count;
+    }
+
+    _getSelectedFolderLabel() {
+        if (!this.selectedDrive) return 'No drive selected';
+        const driveName = this.selectedDrive.label || this.selectedDrive.name || 'Drive';
+        return this.selectedFolder ? `${driveName} / ${this.selectedFolder}` : `${driveName} / Root`;
+    }
+
+    _getStagedUploadStats() {
+        return this.stagedUploads.reduce((stats, batch) => {
+            stats.files += batch.files.length;
+            stats.bytes += batch.files.reduce((sum, fileInfo) => sum + fileInfo.file.size, 0);
+            return stats;
+        }, { files: 0, bytes: 0 });
+    }
+
+    _renderPendingUploadFiles() {
         const container = document.getElementById('fm-selected-files');
         const list = document.getElementById('fm-file-list');
         if (this.selectedFiles.length === 0) { if (container) container.classList.add('hidden'); return; }
         const totalSize = this.selectedFiles.reduce((s, f) => s + f.file.size, 0);
         if (container) container.classList.remove('hidden');
         if (list) {
-            list.innerHTML = `<li class="fm-file-summary"><span><strong>${this.selectedFiles.length}</strong> file${this.selectedFiles.length !== 1 ? 's' : ''}</span><span class="fm-file-size">${formatBytes(totalSize)} total</span></li>`;
+            clear(list);
+            const selectedCount = this._getPendingUploadSelectionCount();
+            append(list, createElement('li', { className: 'fm-file-summary' },
+                createElement('span', { textContent: `${selectedCount} selected of ${this.selectedFiles.length} file${this.selectedFiles.length !== 1 ? 's' : ''}` }),
+                createElement('span', { className: 'fm-file-size', textContent: `${formatBytes(totalSize)} total` })
+            ));
             this.selectedFiles.forEach((fileInfo, index) => {
                 const { file, customFilename } = fileInfo;
                 const supported = isSupportedMedia(file.name);
                 const lastDot = file.name.lastIndexOf('.');
                 const ext = lastDot !== -1 ? file.name.substring(lastDot) : '';
                 const icon = file.type.startsWith('video/') ? videoIcon(14) : imageIcon(14);
-                const li = createElement('li', { className: supported ? '' : 'fm-file-unsupported' });
-                li.innerHTML = `<div class="fm-file-info"><span class="fm-file-icon">${icon}</span><div class="fm-rename-container"><input type="text" class="fm-file-rename-input" value="${escapeHtml(customFilename)}" data-index="${index}"><span class="fm-file-ext">${escapeHtml(ext)}</span></div></div><span class="fm-file-size">${formatBytes(file.size)}</span>`;
-                const input = $('.fm-file-rename-input', li);
-                if (input) this.on(input, 'input', (e) => { this.selectedFiles[index].customFilename = e.target.value.trim(); });
+                const li = createElement('li', { className: supported ? 'fm-upload-file-row' : 'fm-upload-file-row fm-file-unsupported' },
+                    createElement('input', {
+                        type: 'checkbox',
+                        className: 'fm-upload-file-checkbox',
+                        dataset: { index: String(index) },
+                        ...(this.selectedUploadFileIndices.has(index) ? { checked: true } : {}),
+                        'aria-label': `Select ${file.name}`
+                    }),
+                    createElement('div', { className: 'fm-file-info' },
+                        createElement('span', { className: 'fm-file-icon', innerHTML: icon }),
+                        createElement('div', { className: 'fm-rename-container' },
+                            createElement('input', { type: 'text', className: 'fm-file-rename-input', value: customFilename, dataset: { index: String(index) }, placeholder: 'New name...' }),
+                            createElement('span', { className: 'fm-file-ext', textContent: ext })
+                        )
+                    ),
+                    createElement('span', { className: 'fm-file-size', textContent: formatBytes(file.size) }),
+                    createElement('button', { className: 'fm-icon-btn fm-upload-file-remove', dataset: { index: String(index) }, title: 'Remove from staging list', innerHTML: ICONS.CANCEL })
+                );
                 append(list, li);
             });
         }
-        this._updateUploadButton();
     }
 
-    _updateUploadButton() {
-        const btn = document.getElementById('fm-upload-btn');
-        if (btn) btn.disabled = !this.selectedDrive || this.selectedFiles.length === 0;
+    _renderStagedUploads() {
+        const container = document.getElementById('fm-staged-uploads');
+        const list = document.getElementById('fm-staged-list');
+        if (!container || !list) return;
+        if (this.stagedUploads.length === 0) {
+            container.classList.add('hidden');
+            clear(list);
+            return;
+        }
+
+        container.classList.remove('hidden');
+        clear(list);
+        this.stagedUploads.forEach((batch, index) => {
+            const totalSize = batch.files.reduce((sum, fileInfo) => sum + fileInfo.file.size, 0);
+            const previewNames = batch.files.slice(0, 3).map(fileInfo => fileInfo.file.name).join(', ');
+            const moreCount = Math.max(0, batch.files.length - 3);
+            append(list, createElement('li', { className: 'fm-staged-upload-row' },
+                createElement('div', { className: 'fm-staged-upload-info' },
+                    createElement('div', { className: 'fm-staged-upload-target', textContent: batch.label }),
+                    createElement('div', {
+                        className: 'fm-staged-upload-meta',
+                        textContent: `${batch.files.length} file${batch.files.length !== 1 ? 's' : ''} · ${formatBytes(totalSize)}`
+                    }),
+                    createElement('div', {
+                        className: 'fm-staged-upload-preview',
+                        textContent: moreCount > 0 ? `${previewNames}, +${moreCount} more` : previewNames
+                    })
+                ),
+                createElement('button', {
+                    className: 'btn btn--sm fm-staged-upload-remove',
+                    type: 'button',
+                    dataset: { index: String(index) },
+                    textContent: 'Unstage'
+                })
+            ));
+        });
+
     }
 
-    async _uploadFiles() {
+    _selectAllPendingUploadFiles(shouldSelect) {
+        if (shouldSelect) {
+            this.selectedFiles.forEach((_file, index) => this.selectedUploadFileIndices.add(index));
+        } else {
+            this.selectedUploadFileIndices.clear();
+        }
+        this._renderPendingUploadFiles();
+        this._updateUploadControls();
+    }
+
+    _removePendingUploadFile(index) {
+        this.selectedFiles.splice(index, 1);
+        const nextSelection = new Set();
+        this.selectedUploadFileIndices.forEach(selectedIndex => {
+            if (selectedIndex < index) nextSelection.add(selectedIndex);
+            else if (selectedIndex > index) nextSelection.add(selectedIndex - 1);
+        });
+        this.selectedUploadFileIndices = nextSelection;
+        this._renderPendingUploadFiles();
+        this._updateUploadControls();
+    }
+
+    _stageSelectedFiles() {
         if (!this.selectedDrive || this.selectedFiles.length === 0 || this.isUploading) return;
+        const selectedIndices = Array.from(this.selectedUploadFileIndices)
+            .filter(index => this.selectedFiles[index])
+            .sort((a, b) => a - b);
+        if (selectedIndices.length === 0) {
+            toast.error('Select at least one file to stage');
+            return;
+        }
+
+        const filesForBatch = selectedIndices.map(index => this.selectedFiles[index]);
+        const subfolder = this.selectedFolder || '';
+        const existingBatch = this.stagedUploads.find(batch =>
+            batch.drivePath === this.selectedDrive.path && batch.subfolder === subfolder
+        );
+
+        if (existingBatch) {
+            existingBatch.files.push(...filesForBatch);
+        } else {
+            this.stagedUploads.push({
+                id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                drivePath: this.selectedDrive.path,
+                driveLabel: this.selectedDrive.label || this.selectedDrive.name || 'Drive',
+                subfolder,
+                label: this._getSelectedFolderLabel(),
+                files: filesForBatch
+            });
+        }
+
+        this.selectedFiles = this.selectedFiles.filter((_file, index) => !this.selectedUploadFileIndices.has(index));
+        this.selectedUploadFileIndices.clear();
+        this._renderPendingUploadFiles();
+        this._renderStagedUploads();
+        this._updateUploadControls();
+    }
+
+    _unstageBatch(index) {
+        const [batch] = this.stagedUploads.splice(index, 1);
+        if (!batch) return;
+        const startIndex = this.selectedFiles.length;
+        this.selectedFiles.push(...batch.files);
+        batch.files.forEach((_file, offset) => this.selectedUploadFileIndices.add(startIndex + offset));
+        this._renderPendingUploadFiles();
+        this._renderStagedUploads();
+        this._updateUploadControls();
+    }
+
+    _updateUploadControls() {
+        const stageBtn = document.getElementById('fm-upload-btn');
+        const startBtn = document.getElementById('fm-start-upload-btn');
+        const selectedCount = this._getPendingUploadSelectionCount();
+        const stagedStats = this._getStagedUploadStats();
+
+        if (stageBtn) {
+            stageBtn.disabled = !this.selectedDrive || selectedCount === 0 || this.isUploading;
+            stageBtn.classList.toggle('hidden', this.isUploading || this.selectedFiles.length === 0);
+            const label = selectedCount > 0 ? `Stage ${selectedCount}` : 'Stage';
+            stageBtn.innerHTML = `${ICONS.UPLOAD}${label}`;
+            stageBtn.title = this.selectedDrive ? `Destination: ${this._getSelectedFolderLabel()}` : 'Select a drive first';
+        }
+
+        if (startBtn) {
+            startBtn.disabled = stagedStats.files === 0 || this.selectedFiles.length > 0 || this.isUploading;
+            startBtn.classList.toggle('hidden', this.isUploading || stagedStats.files === 0);
+            startBtn.innerHTML = `${ICONS.UPLOAD} Start ${stagedStats.files} Upload${stagedStats.files === 1 ? '' : 's'}`;
+            startBtn.title = this.selectedFiles.length > 0
+                ? 'Stage or remove the remaining files before starting'
+                : `Upload ${stagedStats.files} staged file${stagedStats.files === 1 ? '' : 's'}`;
+        }
+    }
+
+    async _uploadBatchWithDuplicateHandling(batch, onProgress, onFileComplete) {
+        const runUpload = (skipDuplicateCheck) => uploadFilesOptimized(
+            batch.files,
+            batch.drivePath,
+            batch.subfolder,
+            onProgress,
+            onFileComplete,
+            skipDuplicateCheck
+        );
+
+        resetDuplicateState();
+        let result = await runUpload(false);
+        if (result?.waitingForUser) {
+            result = await new Promise((resolve, reject) => {
+                const duplicateState = getDuplicateState();
+                showDuplicateWarning(
+                    batch.files,
+                    async () => {
+                        duplicateState.userChoice = 'skip';
+                        try { resolve(await runUpload(true)); }
+                        catch (error) { reject(error); }
+                    },
+                    async () => {
+                        duplicateState.userChoice = 'upload';
+                        try { resolve(await runUpload(true)); }
+                        catch (error) { reject(error); }
+                    },
+                    () => {
+                        reject(new Error('Duplicate review cancelled'));
+                    }
+                );
+            });
+        }
+        resetDuplicateState();
+        return result || { success: 0, failed: 0, errors: [], log: [] };
+    }
+
+    async _startStagedUploads() {
+        if (this.stagedUploads.length === 0 || this.selectedFiles.length > 0 || this.isUploading) return;
         const m = (id) => document.getElementById(id);
         m('fm-upload-progress').classList.remove('hidden');
         m('fm-upload-results').classList.add('hidden');
         m('fm-upload-btn').disabled = true;
         m('fm-upload-btn').classList.add('hidden');
+        m('fm-start-upload-btn').disabled = true;
+        m('fm-start-upload-btn').classList.add('hidden');
         m('fm-cancel-upload-btn').classList.remove('hidden');
         this.isUploading = true;
         resetUploadState();
+        resetDuplicateState();
         const results = [];
+        const batches = [...this.stagedUploads];
+        const totalBytes = batches.reduce((sum, batch) =>
+            sum + batch.files.reduce((fileSum, fileInfo) => fileSum + fileInfo.file.size, 0), 0);
+        let completedBytes = 0;
+        let uploadedCount = 0;
+        const totalFiles = batches.reduce((sum, batch) => sum + batch.files.length, 0);
+
         try {
-            const result = await uploadFilesOptimized(
-                this.selectedFiles, this.selectedDrive.path, this.selectedFolder,
-                (p) => { const f = m('fm-progress-fill'), t = m('fm-progress-text'); if (f) f.style.width = `${p}%`; if (t) t.textContent = `Uploading... ${Math.round(p)}%`; },
-                (filename, success, error) => { results.push({ filename, success, message: success ? 'Uploaded' : (error || 'Failed') }); }
-            );
+            for (const batch of batches) {
+                if (isUploadCancelled()) break;
+                const batchBytes = batch.files.reduce((sum, fileInfo) => sum + fileInfo.file.size, 0);
+                const updateProgress = (batchProgress) => {
+                    const uploadedBytes = completedBytes + (batchBytes * (batchProgress / 100));
+                    const overallProgress = totalBytes > 0 ? Math.round((uploadedBytes / totalBytes) * 100) : 0;
+                    const f = m('fm-progress-fill');
+                    const t = m('fm-progress-text');
+                    if (f) f.style.width = `${overallProgress}%`;
+                    if (t) t.textContent = `Uploading ${uploadedCount} of ${totalFiles} files... ${overallProgress}%`;
+                };
+
+                const result = await this._uploadBatchWithDuplicateHandling(
+                    batch,
+                    updateProgress,
+                    (filename, success, error) => {
+                        uploadedCount += 1;
+                        results.push({
+                            filename,
+                            target: batch.label,
+                            success,
+                            message: success ? 'Uploaded' : (error || 'Failed')
+                        });
+                    }
+                );
+                completedBytes += batchBytes;
+                if (result.skippedAll) {
+                    batch.files.forEach(fileInfo => {
+                        uploadedCount += 1;
+                        results.push({
+                            filename: fileInfo.customFilename || fileInfo.file.name,
+                            target: batch.label,
+                            success: true,
+                            message: 'Skipped duplicate'
+                        });
+                    });
+                }
+                updateProgress(100);
+            }
+
             m('fm-upload-progress').classList.add('hidden');
             m('fm-upload-results').classList.remove('hidden');
-            m('fm-results-list').innerHTML = results.slice(0, 20).map(r => `<li class="${r.success ? 'fm-result-success' : 'fm-result-error'}">${r.success ? ICONS.CHECK : '✗'} <span>${escapeHtml(r.filename)}</span> <span class="fm-result-message">${escapeHtml(r.message)}</span></li>`).join('');
+            m('fm-results-list').innerHTML = results.slice(0, 20).map(r => `<li class="${r.success ? 'fm-result-success' : 'fm-result-error'}">${r.success ? ICONS.CHECK : '✗'} <span>${escapeHtml(r.filename)}</span> <span class="fm-result-target">${escapeHtml(r.target || '')}</span> <span class="fm-result-message">${escapeHtml(r.message)}</span></li>`).join('');
             if (results.length > 20) m('fm-results-list').innerHTML += `<li class="fm-result-more">... and ${results.length - 20} more files</li>`;
-            this.selectedFiles = [];
+            this.stagedUploads = [];
             const fileInput = m('fm-file-input'); if (fileInput) fileInput.value = '';
             const folderInput = m('fm-folder-input'); if (folderInput) folderInput.value = '';
-            m('fm-selected-files').classList.add('hidden');
-            if (result.success > 0) {
+            this._renderStagedUploads();
+            const successfulUploads = results.filter(result => result.success && result.message !== 'Skipped duplicate').length;
+            if (successfulUploads > 0) {
                 m('fm-upload-progress').classList.remove('hidden');
                 m('fm-progress-fill').style.width = '100%';
                 m('fm-progress-fill').style.background = 'var(--accent-color)';
-                m('fm-progress-text').textContent = `Successfully uploaded ${result.success} of ${this.selectedFiles.length + result.success} files`;
+                m('fm-progress-text').textContent = `Successfully uploaded ${successfulUploads} of ${totalFiles} files`;
                 refreshAllLayouts();
             }
         } catch (err) {
@@ -1375,8 +1734,9 @@ class FileManagerModule extends Module {
             this.isUploading = false;
             m('fm-upload-btn').disabled = false;
             m('fm-upload-btn').classList.remove('hidden');
+            m('fm-start-upload-btn').classList.remove('hidden');
             m('fm-cancel-upload-btn').classList.add('hidden');
-            this._updateUploadButton();
+            this._updateUploadControls();
         }
     }
 
@@ -1487,6 +1847,8 @@ _fileManager.start();
 export function initFileManager() { /* No-op — module starts at module load */ }
 
 export function openFileManager() { _fileManager.open(false); }
+
+export function openUploadStatus() { _fileManager.open(false, { statusOnly: true }); }
 
 export function openManageContent() { _fileManager.open(true); }
 

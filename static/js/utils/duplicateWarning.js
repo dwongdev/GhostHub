@@ -18,11 +18,12 @@ function escapeHtml(text) {
 }
 
 class DuplicateWarningComponent extends Component {
-    constructor(files, onSkip, onRename) {
+    constructor(files, onSkip, onRename, onCancel = null) {
         super();
         this.files = files;
         this.onSkip = onSkip;
         this.onRename = onRename;
+        this.onCancel = onCancel;
         this.duplicateFiles = [];
         this.activeOutsideClickRemovers = new Map();
         this.escapeHandler = this.handleEscape.bind(this);
@@ -161,6 +162,7 @@ class DuplicateWarningComponent extends Component {
 
     closeModal = () => {
         this.unmount();
+        if (this.onCancel) this.onCancel();
     };
 
     handleEscape(e) {
@@ -254,8 +256,9 @@ let activeModal = null;
  * @param {Array} files - Array of file objects to potentially rename
  * @param {Function} onSkip - Callback when user chooses to skip duplicates
  * @param {Function} onRename - Callback when user renames and uploads
+ * @param {Function} onCancel - Optional callback when the modal is closed without a choice
  */
-export function showDuplicateWarning(files, onSkip, onRename) {
+export function showDuplicateWarning(files, onSkip, onRename, onCancel = null) {
     const state = getDuplicateState();
 
     if (!state.duplicates || state.duplicates.length === 0) {
@@ -267,7 +270,7 @@ export function showDuplicateWarning(files, onSkip, onRename) {
         activeModal = null;
     }
 
-    activeModal = new DuplicateWarningComponent(files, onSkip, onRename);
+    activeModal = new DuplicateWarningComponent(files, onSkip, onRename, onCancel);
     activeModal.mount(document.body);
 }
 

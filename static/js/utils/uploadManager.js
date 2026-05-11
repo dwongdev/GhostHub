@@ -622,8 +622,10 @@ function updateGlobalIndicator(percent = 0, finished = false) {
             id: 'global-upload-indicator',
             className: 'global-upload-indicator',
             onclick: () => {
-                // Re-open file manager if clicked
-                if (window.ragotModules && window.ragotModules.uiController && typeof window.ragotModules.uiController.openFileManager === 'function') {
+                // Re-open focused upload status if clicked
+                if (window.ragotModules && window.ragotModules.uiController && typeof window.ragotModules.uiController.openUploadStatus === 'function') {
+                    window.ragotModules.uiController.openUploadStatus();
+                } else if (window.ragotModules && window.ragotModules.uiController && typeof window.ragotModules.uiController.openFileManager === 'function') {
                     window.ragotModules.uiController.openFileManager();
                 } else {
                     // Fallback: try to find the modal and show it
