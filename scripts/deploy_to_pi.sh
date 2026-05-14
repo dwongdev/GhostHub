@@ -346,7 +346,7 @@ if [ $EXIT_CODE -eq 0 ]; then
     write_success "Deploy Successful"
     if $GOLDEN; then
         write_phase "Image Prep"
-        run_ssh "sudo systemctl stop ghosthub ghosthub-kiosk 2>/dev/null || true; sudo rm -rf $TARGET_DIR/instance/* 2>/dev/null || true; rm -f /tmp/ghosthub_deploy.zip; sudo shutdown -h now"
+        run_ssh "sudo systemctl stop ghosthub ghosthub-kiosk 2>/dev/null || true; sudo systemctl disable ssh 2>/dev/null || true; sudo rm -rf $TARGET_DIR/instance/* 2>/dev/null || true; rm -f /tmp/ghosthub_deploy.zip; sudo shutdown -h now"
         write_success "Pi is powering off"
     fi
 else

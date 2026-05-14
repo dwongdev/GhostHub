@@ -442,7 +442,7 @@ if ($ExitCode -eq 0) {
         Write-Host ""
 
         Write-Status "Stopping GhostHub service..."
-        $StopCmd = "sudo systemctl stop ghosthub ghosthub-kiosk 2>/dev/null || true && sudo pkill -9 gunicorn 2>/dev/null || true && echo '[+] Services stopped'"
+        $StopCmd = "sudo systemctl stop ghosthub ghosthub-kiosk 2>/dev/null || true && sudo pkill -9 gunicorn 2>/dev/null || true && sudo systemctl disable ssh 2>/dev/null || true && echo '[+] Services stopped, SSH disabled'"
         if ($UsePutty) {
             & $PlinkExe -batch -pw $Password "$PiUser@$PiHost" $StopCmd
         } else {
