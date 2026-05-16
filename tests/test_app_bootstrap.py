@@ -10,6 +10,7 @@ def test_build_specter_services_returns_expected_service_manifest():
     assert [service.name for service in services] == [
         'app_startup',
         'storage_drive_runtime',
+        'user_data_transfer',
         'admin_events',
         'app_request_lifecycle',
         'chat_events',

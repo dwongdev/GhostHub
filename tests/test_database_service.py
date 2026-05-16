@@ -85,255 +85,26 @@ class TestDatabaseInitialization:
             assert 'idx_video_progress_category' in indexes
             assert 'idx_video_progress_last_watched' in indexes
 
-    def test_ensure_database_ready_migrates_legacy_video_progress_schema(self, test_db):
-        """Legacy video_progress rows should migrate into a concrete imported profile."""
+    def test_ensure_database_ready_rejects_pre_baseline_schema(self, test_db):
+        """Schema 15 is the baseline; older databases require an explicit future migration."""
         from app.services.core.database_bootstrap_service import ensure_database_ready
 
         with test_db.get_db() as conn:
-            conn.execute("DROP TABLE IF EXISTS video_progress")
-            conn.execute("DROP TABLE IF EXISTS profiles")
             conn.execute("DELETE FROM schema_info WHERE key = 'version'")
-            conn.execute(
-                """
-                CREATE TABLE video_progress (
-                    video_path TEXT PRIMARY KEY,
-                    category_id TEXT,
-                    video_timestamp REAL,
-                    video_duration REAL,
-                    thumbnail_url TEXT,
-                    last_watched REAL NOT NULL DEFAULT 0,
-                    updated_at REAL NOT NULL DEFAULT 0
-                )
-                """
-            )
-            conn.execute(
-                """
-                INSERT INTO video_progress (
-                    video_path,
-                    category_id,
-                    video_timestamp,
-                    video_duration,
-                    thumbnail_url,
-                    last_watched,
-                    updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                ('/media/legacy.mp4', 'legacy-cat', 120.0, 3600.0, '/thumb.jpg', 1000.0, 1000.0),
-            )
-            conn.execute(
-                "INSERT INTO schema_info (key, value) VALUES (?, ?)",
-                ('version', '11'),
-            )
-
-        ensure_database_ready()
-
-        with test_db.get_db() as conn:
-            version_row = conn.execute(
-                "SELECT value FROM schema_info WHERE key = 'version'"
-            ).fetchone()
-            assert int(version_row['value']) == test_db.SCHEMA_VERSION
-
-            columns = [
-                row['name']
-                for row in conn.execute("PRAGMA table_info(video_progress)").fetchall()
-            ]
-            assert 'profile_id' in columns
-
-            migrated_row = conn.execute(
-                """
-                SELECT video_path, profile_id, category_id
-                FROM video_progress
-                WHERE video_path = ?
-                """,
-                ('/media/legacy.mp4',),
-            ).fetchone()
-            assert migrated_row is not None
-            assert migrated_row['category_id'] == 'legacy-cat'
-            assert migrated_row['profile_id']
-
-            profile_row = conn.execute(
-                "SELECT name FROM profiles WHERE id = ?",
-                (migrated_row['profile_id'],),
-            ).fetchone()
-            assert profile_row is not None
-            assert profile_row['name'].startswith('Imported Progress')
-
-    def test_ensure_database_ready_adds_profile_columns_for_v12(self, test_db):
-        """Version 12 databases should gain the new profile columns."""
-        from app.services.core.database_bootstrap_service import ensure_database_ready
-
-        with test_db.get_db() as conn:
-            conn.execute("DROP TABLE IF EXISTS profiles")
-            conn.execute("DELETE FROM schema_info WHERE key = 'version'")
-            conn.execute(
-                """
-                CREATE TABLE profiles (
-                    id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL UNIQUE,
-                    avatar_color TEXT DEFAULT NULL,
-                    created_at REAL NOT NULL DEFAULT 0,
-                    last_active_at REAL NOT NULL DEFAULT 0
-                )
-                """
-            )
-            conn.execute(
-                "INSERT INTO schema_info (key, value) VALUES (?, ?)",
-                ('version', '12'),
-            )
-
-        ensure_database_ready()
-
-        with test_db.get_db() as conn:
-            columns = {
-                row['name']
-                for row in conn.execute("PRAGMA table_info(profiles)").fetchall()
-            }
-            version_row = conn.execute(
-                "SELECT value FROM schema_info WHERE key = 'version'"
-            ).fetchone()
-
-            assert 'preferences_json' in columns
-            assert 'avatar_icon' in columns
-            assert int(version_row['value']) == test_db.SCHEMA_VERSION
-
-    def test_ensure_database_ready_adds_avatar_icon_column_for_v13(self, test_db):
-        """Version 13 databases should gain the avatar icon column."""
-        from app.services.core.database_bootstrap_service import ensure_database_ready
-
-        with test_db.get_db() as conn:
-            conn.execute("DROP TABLE IF EXISTS profiles")
-            conn.execute("DELETE FROM schema_info WHERE key = 'version'")
-            conn.execute(
-                """
-                CREATE TABLE profiles (
-                    id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL UNIQUE,
-                    avatar_color TEXT DEFAULT NULL,
-                    preferences_json TEXT DEFAULT NULL,
-                    created_at REAL NOT NULL DEFAULT 0,
-                    last_active_at REAL NOT NULL DEFAULT 0
-                )
-                """
-            )
-            conn.execute(
-                "INSERT INTO schema_info (key, value) VALUES (?, ?)",
-                ('version', '13'),
-            )
-
-        ensure_database_ready()
-
-        with test_db.get_db() as conn:
-            columns = {
-                row['name']
-                for row in conn.execute("PRAGMA table_info(profiles)").fetchall()
-            }
-            version_row = conn.execute(
-                "SELECT value FROM schema_info WHERE key = 'version'"
-            ).fetchone()
-
-            assert 'avatar_icon' in columns
-            assert int(version_row['value']) == test_db.SCHEMA_VERSION
-
-    def test_ensure_database_ready_rebuilds_video_progress_with_foreign_key(self, test_db):
-        """Version 14 databases should gain profile FK enforcement and drop orphans."""
-        from app.services.core.database_bootstrap_service import ensure_database_ready
-
-        with test_db.get_db() as conn:
-            conn.execute("DROP TABLE IF EXISTS video_progress")
-            conn.execute("DROP TABLE IF EXISTS profiles")
-            conn.execute("DELETE FROM schema_info WHERE key = 'version'")
-            conn.execute(
-                """
-                CREATE TABLE profiles (
-                    id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL UNIQUE,
-                    avatar_color TEXT DEFAULT NULL,
-                    avatar_icon TEXT DEFAULT NULL,
-                    preferences_json TEXT DEFAULT NULL,
-                    created_at REAL NOT NULL DEFAULT 0,
-                    last_active_at REAL NOT NULL DEFAULT 0
-                )
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE video_progress (
-                    video_path TEXT NOT NULL,
-                    profile_id TEXT NOT NULL,
-                    category_id TEXT,
-                    video_timestamp REAL,
-                    video_duration REAL,
-                    thumbnail_url TEXT,
-                    last_watched REAL NOT NULL DEFAULT 0,
-                    updated_at REAL NOT NULL DEFAULT 0,
-                    PRIMARY KEY (video_path, profile_id)
-                )
-                """
-            )
-            conn.execute(
-                """
-                INSERT INTO profiles (id, name, created_at, last_active_at)
-                VALUES ('kept-profile', 'Kept Profile', 1, 1)
-                """
-            )
-            conn.execute(
-                """
-                INSERT INTO video_progress (
-                    video_path,
-                    profile_id,
-                    category_id,
-                    video_timestamp,
-                    video_duration,
-                    thumbnail_url,
-                    last_watched,
-                    updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                ('/media/kept.mp4', 'kept-profile', 'movies', 12.0, 30.0, None, 10.0, 10.0),
-            )
-            conn.execute(
-                """
-                INSERT INTO video_progress (
-                    video_path,
-                    profile_id,
-                    category_id,
-                    video_timestamp,
-                    video_duration,
-                    thumbnail_url,
-                    last_watched,
-                    updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                ('/media/orphan.mp4', 'missing-profile', 'movies', 18.0, 30.0, None, 10.0, 10.0),
-            )
             conn.execute(
                 "INSERT INTO schema_info (key, value) VALUES (?, ?)",
                 ('version', '14'),
             )
 
-        ensure_database_ready()
+        with pytest.raises(RuntimeError) as exc_info:
+            ensure_database_ready()
 
+        assert 'Unsupported database schema version 14' in str(exc_info.value)
         with test_db.get_db() as conn:
-            version_row = conn.execute(
-                "SELECT value FROM schema_info WHERE key = 'version'"
-            ).fetchone()
-            foreign_keys = conn.execute(
-                "PRAGMA foreign_key_list(video_progress)"
-            ).fetchall()
-            rows = conn.execute(
-                "SELECT video_path, profile_id FROM video_progress ORDER BY video_path"
-            ).fetchall()
-
-            assert int(version_row['value']) == test_db.SCHEMA_VERSION
-            assert any(
-                row['from'] == 'profile_id' and
-                row['table'] == 'profiles' and
-                str(row['on_delete']).upper() == 'CASCADE'
-                for row in foreign_keys
+            conn.execute(
+                "INSERT INTO schema_info (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                ('version', str(test_db.SCHEMA_VERSION)),
             )
-            assert [(row['video_path'], row['profile_id']) for row in rows] == [
-                ('/media/kept.mp4', 'kept-profile'),
-            ]
     
     def test_get_connection_returns_same_connection_for_thread(self, test_db):
         """Test that get_connection returns the same connection in a single thread."""

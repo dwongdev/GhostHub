@@ -9,7 +9,13 @@ from werkzeug.utils import secure_filename
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_DIR_NAMES = {'$recycle.bin', 'system volume information', '.ghosthub', '.ghosthub_uploads'}
+SYSTEM_DIR_NAMES = {
+    '$recycle.bin',
+    'system volume information',
+    '.ghosthub',
+    '.ghosthub_uploads',
+    'ghosthubbackups',
+}
 
 def _has_subdirectories(path: str) -> bool:
     """Check whether a directory has any non-system subdirectories."""

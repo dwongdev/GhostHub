@@ -21,6 +21,7 @@ import {
     resetDuplicateState,
     getDuplicateState,
     isUploadCancelled,
+    beginUploadActivity,
     formatBytes as formatBytesShared,
     getCurrentUploadSession,
     updateSessionCallbacks
@@ -1668,6 +1669,13 @@ class FileManagerModule extends Module {
         let completedBytes = 0;
         let uploadedCount = 0;
         const totalFiles = batches.reduce((sum, batch) => sum + batch.files.length, 0);
+        const endUploadActivity = beginUploadActivity();
+        let uploadActivityActive = true;
+        const finishUploadActivity = () => {
+            if (!uploadActivityActive) return;
+            uploadActivityActive = false;
+            endUploadActivity();
+        };
 
         try {
             for (const batch of batches) {
@@ -1724,6 +1732,7 @@ class FileManagerModule extends Module {
                 m('fm-progress-fill').style.width = '100%';
                 m('fm-progress-fill').style.background = 'var(--accent-color)';
                 m('fm-progress-text').textContent = `Successfully uploaded ${successfulUploads} of ${totalFiles} files`;
+                finishUploadActivity();
                 refreshAllLayouts();
             }
         } catch (err) {
@@ -1731,6 +1740,7 @@ class FileManagerModule extends Module {
             m('fm-upload-progress').classList.add('hidden');
             toast.error('Upload failed: ' + err.message);
         } finally {
+            finishUploadActivity();
             this.isUploading = false;
             m('fm-upload-btn').disabled = false;
             m('fm-upload-btn').classList.remove('hidden');

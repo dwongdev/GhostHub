@@ -2,7 +2,7 @@
 set -e
 
 # ==== 1. GLOBAL CONFIGURATION ====
-GHOSTHUB_VERSION="5.1.1"
+GHOSTHUB_VERSION="5.2.0"
 GITHUB_REPO="${GITHUB_REPO:-BleedingXiko/GhostHub}"
 ZIP_FILE="Ghosthub_pi_github.zip"
 APP_DIR="/home/ghost/ghosthub"
@@ -1191,6 +1191,11 @@ install() {
     chown -R ghost:ghost "$APP_DIR"
     # Success marker to prevent update mode trigger on failed installs
     touch "$APP_DIR/.install_complete"
+    # Fresh installs touch enough subsystems (display, audio, sudoers, network,
+    # USB udev rules, systemd units) that a reboot is required to land cleanly.
+    # Mark it explicitly here so the reboot doesn't depend on any single setup_*
+    # step happening to flip the flag.
+    mark_reboot_required "Fresh install requires reboot to finalize system services"
     echo ""
     echo "✅ GHOSTHUB INSTALLATION COMPLETE"
     echo "→ Access at: http://ghosthub.local"

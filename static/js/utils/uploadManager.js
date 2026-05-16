@@ -13,6 +13,7 @@
 
 import { createElement, attr, $, $$ } from '../libs/ragot.esm.min.js';
 import { dialog } from './notificationManager.js';
+import { getCurrentLayout } from './layoutUtils.js';
 
 // Detect mobile for reduced resource usage
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -32,6 +33,7 @@ let negotiatedSettings = null;
 // Track active uploads
 const activeUploads = new Map();
 let uploadCancelled = false;
+let uploadActivityDepth = 0;
 
 // Background upload state
 let currentUploadSession = null; // { files, drivePath, subfolder, results, totalBytes, uploadedBytes, onProgress, onFileComplete, isRunning }
@@ -48,6 +50,20 @@ let duplicateDetectionState = {
  */
 export function getCurrentUploadSession() {
     return currentUploadSession;
+}
+
+export function beginUploadActivity() {
+    uploadActivityDepth++;
+    let ended = false;
+    return () => {
+        if (ended) return;
+        ended = true;
+        uploadActivityDepth = Math.max(0, uploadActivityDepth - 1);
+    };
+}
+
+export function isUploadInProgress() {
+    return currentUploadSession?.isRunning === true || uploadActivityDepth > 0;
 }
 
 /**
@@ -131,7 +147,11 @@ function getChunkSize() {
  * @returns {number}
  */
 export function getMaxConcurrentChunks() {
-    return negotiatedSettings?.max_concurrent_chunks || MAX_CONCURRENT_CHUNKS;
+    const configuredLimit = negotiatedSettings?.max_concurrent_chunks || MAX_CONCURRENT_CHUNKS;
+    if (getCurrentLayout() === 'streaming' && isUploadInProgress()) {
+        return 1;
+    }
+    return configuredLimit;
 }
 
 /**

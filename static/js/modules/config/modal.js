@@ -318,7 +318,11 @@ async function populateConfigModal() {
         }));
 
         // App/Media Settings (Python config)
-        append(body, createAdminSettingsSection(currentSettingsMode, closeConfigModal));
+        const adminSettingsSection = createAdminSettingsSection(currentSettingsMode, closeConfigModal);
+        append(body, adminSettingsSection);
+        if (typeof adminSettingsSection.__cleanup === 'function') {
+            sectionCleanups.push(adminSettingsSection.__cleanup);
+        }
 
         // WiFi
         append(body, createWifiSettingsSection());

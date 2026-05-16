@@ -1,4 +1,5 @@
 import { Module, $ } from '../../../libs/ragot.esm.min.js';
+import { isUploadInProgress } from '../../../utils/uploadManager.js';
 
 /**
  * Shared socket handler manager for layout modules.
@@ -95,6 +96,9 @@ export function createLayoutSocketHandlerManager({
                 const isUploadOrIndexChange = data.reason === 'upload_complete' ||
                     data.reason === 'chunked_upload' ||
                     data.reason === 'index_updated';
+                if (isUploadOrIndexChange && isUploadInProgress()) {
+                    return;
+                }
 
                 const isShowHiddenToggle = data.reason === 'show_hidden_enabled' ||
                     data.reason === 'show_hidden_disabled';

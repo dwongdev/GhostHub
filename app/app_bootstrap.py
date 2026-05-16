@@ -105,6 +105,7 @@ def build_specter_services():
     from app.services.system.tunnel.mesh_watchdog_service import MeshWatchdogService
     from app.services.system.tunnel.url_capture_service import TunnelUrlCaptureService
     from app.services.system.factory_reset_service import FactoryResetService
+    from app.services.system.user_data_transfer_service import UserDataTransferService
     from app.services.system.worker_boot_service import SystemWorkerBootService
 
     services = [
@@ -135,6 +136,7 @@ def build_specter_services():
         TunnelUrlCaptureService(),
         TVCastService(),
         TVEventService(),
+        UserDataTransferService(),
         UploadSessionRuntimeService(),
         AppStartupService(),
         MediaWorkerBootService(),

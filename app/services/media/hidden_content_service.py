@@ -73,6 +73,13 @@ def _invalidate_hidden_categories_cache():
     logger.debug("Hidden categories cache invalidated")
 
 
+def invalidate_hidden_content_caches():
+    """Invalidate cached hidden category and file state."""
+    _hidden_categories_cache.invalidate()
+    _hidden_files_cache.invalidate()
+    logger.debug("Hidden content caches invalidated")
+
+
 def get_hidden_categories_set():
     """Return cached hidden category IDs."""
     def factory():

@@ -6,22 +6,28 @@ GhostHub's Pi install path targets:
 
 ```text
 Hardware: Raspberry Pi 4
-OS image: 2022-01-28-raspios-bullseye-armhf-lite
+Recommended OS image: 2022-01-28-raspios-bullseye-arm64-lite
+32-bit fallback: 2022-01-28-raspios-bullseye-armhf-lite
 ```
 
 Do not assume newer Raspberry Pi OS images are compatible unless a release explicitly says they have been tested.
 
 ## Download The Supported OS
 
-Download the exact matching Raspberry Pi OS Lite image from Raspberry Pi's official archive:
+Download the supported 2022-01-28 Raspberry Pi OS Lite Bullseye image from Raspberry Pi's official archive:
 
 ```text
+Recommended: 2022-01-28-raspios-bullseye-arm64-lite
+https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-01-28/2022-01-28-raspios-bullseye-arm64-lite.zip
+
+32-bit fallback: 2022-01-28-raspios-bullseye-armhf-lite
 https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip
 ```
 
 Optional checksum file:
 
 ```text
+https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-01-28/2022-01-28-raspios-bullseye-arm64-lite.zip.sha256
 https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip.sha256
 ```
 
@@ -69,7 +75,6 @@ After you are logged into the Pi, run the GhostHub release installer on the Pi:
 APP_TAG="$(curl -fsSL https://api.github.com/repos/BleedingXiko/GhostHub/releases \
   | sed -n 's/.*"tag_name": "\(v[0-9][0-9.]*\)".*/\1/p' \
   | head -n 1)"
-test -n "$APP_TAG" || { echo "Could not resolve latest GhostHub app release tag"; exit 1; }
 curl -L -o install_ghosthub.sh \
   "https://github.com/BleedingXiko/GhostHub/releases/download/${APP_TAG}/install_ghosthub.sh"
 chmod +x install_ghosthub.sh

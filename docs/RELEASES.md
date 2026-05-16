@@ -29,11 +29,15 @@ Public releases should include:
 - `Ghosthub_pi_github.zip`
 - `install_ghosthub.sh`
 
-The ready-to-flash GhostHub SD card image is prepared and uploaded separately by the maintainer. It is not produced by `scripts/ghostpack.py` and is not attached by the GitHub release workflow.
+The ready-to-flash GhostHub SD card image is prepared and uploaded separately by the maintainer. It is not produced by `scripts/ghostpack.py` and is not attached by the GitHub release workflow. B5 and newer image releases use separate `arm64` and `armhf` image ZIPs with clear architecture labels.
 
-DIY users should download the clean Bullseye Lite OS image from Raspberry Pi's official archive:
+DIY users should download the clean supported 2022-01-28 Bullseye Lite OS image from Raspberry Pi's official archive:
 
 ```text
+Recommended: 2022-01-28-raspios-bullseye-arm64-lite
+https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-01-28/2022-01-28-raspios-bullseye-arm64-lite.zip
+
+32-bit fallback: 2022-01-28-raspios-bullseye-armhf-lite
 https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip
 ```
 
@@ -85,8 +89,8 @@ The release workflow runs when a `v*.*.*` tag is pushed. It:
 
 5. Publish a `vX.Y.Z` tag.
 6. Confirm the GitHub release contains the ZIP and installer.
-7. Upload or publish the ready-to-flash GhostHub SD card image through the separate maintainer-controlled download path.
-8. Flash the GhostHub SD card image on a fresh card and perform the first-boot smoke test.
+7. Upload or publish the ready-to-flash GhostHub SD card image ZIPs through the separate maintainer-controlled download path.
+8. Flash each published GhostHub SD card image variant on a fresh card and perform the first-boot smoke test.
 9. Test an update from the previous public release through the admin UI.
 
 ## First-Boot Smoke Test

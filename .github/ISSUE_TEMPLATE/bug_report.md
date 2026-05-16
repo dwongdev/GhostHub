@@ -18,7 +18,7 @@ e.g. vX.Y.Z (see Settings → System, or `app/version.py`)
 e.g. Raspberry Pi 4 (4GB), microSD class, USB drive type
 
 **OS image**
-e.g. `2022-01-28-raspios-bullseye-armhf-lite`, or Pi OS shipped with the GhostHub image
+e.g. `2022-01-28-raspios-bullseye-arm64-lite`, `2022-01-28-raspios-bullseye-armhf-lite`, or Pi OS shipped with the GhostHub image
 
 **What happened**
 Clear description of the bug and what you expected instead.

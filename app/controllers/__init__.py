@@ -11,6 +11,9 @@ def build_controller_classes():
         AdminMaintenanceController,
     )
     from app.controllers.admin.admin_system_controller import AdminSystemController
+    from app.controllers.admin.admin_user_data_transfer_controller import (
+        AdminUserDataTransferController,
+    )
     from app.controllers.admin.admin_visibility_controller import AdminVisibilityController
     from app.controllers.core.connection_controller import ConnectionController
     from app.controllers.core.main_controller import MainController
@@ -45,6 +48,7 @@ def build_controller_classes():
         AdminController,
         AdminMaintenanceController,
         AdminSystemController,
+        AdminUserDataTransferController,
         AdminVisibilityController,
         CategoryController,
         ChatController,

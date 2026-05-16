@@ -11,6 +11,7 @@ def test_build_controller_classes_returns_expected_controller_manifest():
         'AdminController',
         'AdminMaintenanceController',
         'AdminSystemController',
+        'AdminUserDataTransferController',
         'AdminVisibilityController',
         'CategoryController',
         'ChatController',

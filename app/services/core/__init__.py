@@ -3,6 +3,7 @@ from .admin_event_service import *
 from .app_request_lifecycle_service import *
 from .app_startup_service import *
 from .config_service import *
+from .config_live_apply_service import *
 from .database_bootstrap_service import *
 from .database_schema_service import *
 from .profile_service import *

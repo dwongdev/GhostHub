@@ -12,6 +12,7 @@ import { refreshAllLayouts } from '../../../utils/liveVisibility.js';
 import { setupCollapsibleSection, shouldShowSetting, createConfigInput } from './sectionUtils.js';
 import { createElement, attr } from '../../../libs/ragot.esm.min.js';
 import { toast, dialog } from '../../../utils/notificationManager.js';
+import { createUserDataTransferSection } from './userDataTransferSection.js';
 
 /**
  * Creates the settings mode toggle (Basic/Advanced) for admin settings.
@@ -340,6 +341,9 @@ export function createAdminSettingsSection(settingsMode, closeConfigModal) {
 
     pythonSettingsContainer.appendChild(maintButtons);
 
+    const userDataSection = createUserDataTransferSection();
+    pythonSettingsContainer.appendChild(userDataSection);
+
     // Clustered Config Keys
     const configGroups = [
         { id: 'security', label: 'Security', icon: shieldCheckIcon, keys: ['SESSION_PASSWORD', 'ADMIN_PASSWORD'] },
@@ -404,6 +408,12 @@ export function createAdminSettingsSection(settingsMode, closeConfigModal) {
     fragment.appendChild(pythonSettingsContainer);
 
     setupCollapsibleSection(pythonHeader, pythonSettingsContainer);
+
+    fragment.__cleanup = () => {
+        if (typeof userDataSection.__cleanup === 'function') {
+            userDataSection.__cleanup();
+        }
+    };
 
     return fragment;
 }

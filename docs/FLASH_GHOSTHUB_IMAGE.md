@@ -14,7 +14,7 @@ This image is prepared and uploaded separately by the maintainer. It is not prod
 
 ## Flash
 
-1. Download the ready-to-flash GhostHub image from the project download page or announcement post.
+1. Download the ready-to-flash GhostHub image from the project download page or announcement post. For B5 and newer image releases, use `arm64` for the recommended Pi 4 image or `armhf` if you need the 32-bit build.
 2. Open Raspberry Pi Imager or balenaEtcher.
 3. Select the downloaded GhostHub image.
 4. Select the microSD card.
@@ -37,6 +37,8 @@ If the Pi is connected to your router by Ethernet, devices on that LAN can also 
 ```text
 http://<pi-ip-address>:5000
 ```
+
+Prebuilt GhostHub images ship with SSH disabled. If you need SSH during setup, use [DIY Install](DIY_INSTALL.md) and enable SSH in Raspberry Pi Imager.
 
 ## Add Media
 

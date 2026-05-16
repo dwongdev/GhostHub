@@ -487,7 +487,13 @@ def _all_subfolders_hidden(path: str) -> bool:
         with os.scandir(path) as entries:
             for entry in entries:
                 if entry.is_dir() and not entry.name.startswith('.'):
-                    if entry.name.lower() in ['$recycle.bin', 'system volume information', '.ghosthub', '.ghosthub_uploads']:
+                    if entry.name.lower() in [
+                        '$recycle.bin',
+                        'system volume information',
+                        '.ghosthub',
+                        '.ghosthub_uploads',
+                        'ghosthubbackups',
+                    ]:
                         continue
                     has_subdirs = True
                     try:

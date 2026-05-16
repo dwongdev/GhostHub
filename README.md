@@ -5,7 +5,7 @@
 <p>
   <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg"></a>
   <a href="https://github.com/BleedingXiko/GhostHub/releases"><img alt="Latest app release tag" src="https://img.shields.io/github/v/tag/BleedingXiko/GhostHub?filter=v*&label=app%20release&color=blue"></a>
-  <a href="https://github.com/BleedingXiko/GhostHub/releases/tag/B5"><img alt="Ready-to-flash image built on v5.0.1" src="https://img.shields.io/badge/ready--to--flash%20image-built%20on%20v5.0.1-success?logo=raspberrypi&logoColor=white"></a>
+  <a href="https://github.com/BleedingXiko/GhostHub/releases/tag/B5"><img alt="Ready-to-flash image built on v5.2.0" src="https://img.shields.io/badge/ready--to--flash%20image-built%20on%20v5.2.0-success?logo=raspberrypi&logoColor=white"></a>
   <img alt="Platform" src="https://img.shields.io/badge/platform-Raspberry%20Pi%204-c51a4a?logo=raspberrypi&logoColor=white">
   <img alt="Status" src="https://img.shields.io/badge/status-active-brightgreen">
 </p>
@@ -26,7 +26,7 @@
   <img src="Settings.PNG" alt="GhostHub system stats" width="31%">
 </p>
 
-> **Compatibility:** GhostHub's Pi install path targets Raspberry Pi 4 running `2022-01-28-raspios-bullseye-armhf-lite`. It is not a generic installer for every Raspberry Pi OS image.
+> **Compatibility:** GhostHub targets Raspberry Pi 4 using the supported 2022-01-28 Raspberry Pi OS Lite Bullseye image. Use `arm64` for the recommended Pi 4 setup, or `armhf` if you need the 32-bit build. It is not a generic installer for every Raspberry Pi OS image.
 
 ---
 
@@ -76,16 +76,19 @@ GhostStream is **not bundled** and is **off by default**. Without it, files in t
 
 ### Option 1 — Flash the prebuilt image (fastest)
 
-1. Download the GhostHub SD card image from the [ready-to-flash image release built on v5.0.1](https://github.com/BleedingXiko/GhostHub/releases/tag/B5).
+1. Download the GhostHub SD card image from the [ready-to-flash image release built on v5.2.0](https://github.com/BleedingXiko/GhostHub/releases/tag/B5). Use `arm64` for the recommended Raspberry Pi 4 image, or `armhf` if you need the 32-bit build.
 2. Flash it to a microSD card with [Raspberry Pi Imager](https://www.raspberrypi.com/software/) or balenaEtcher.
 3. Boot the Pi, connect your phone or laptop to the `GhostHub` Wi-Fi network, and open `http://ghosthub.local` (or `http://192.168.4.1`).
 
 ### Option 2 — DIY install on stock Raspberry Pi OS
 
-Flash the exact supported base image with Raspberry Pi Imager v1.8.5:
+Flash the supported 2022-01-28 Raspberry Pi OS Lite Bullseye base image with Raspberry Pi Imager v1.8.5:
 
 ```text
-2022-01-28-raspios-bullseye-armhf-lite
+Recommended: 2022-01-28-raspios-bullseye-arm64-lite
+https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-01-28/2022-01-28-raspios-bullseye-arm64-lite.zip
+
+32-bit fallback: 2022-01-28-raspios-bullseye-armhf-lite
 https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip
 ```
 
@@ -106,7 +109,6 @@ ssh ghost@ghosthub.local
 APP_TAG="$(curl -fsSL https://api.github.com/repos/BleedingXiko/GhostHub/releases \
   | sed -n 's/.*"tag_name": "\(v[0-9][0-9.]*\)".*/\1/p' \
   | head -n 1)"
-test -n "$APP_TAG" || { echo "Could not resolve latest GhostHub app release tag"; exit 1; }
 curl -L -o install_ghosthub.sh \
   "https://github.com/BleedingXiko/GhostHub/releases/download/${APP_TAG}/install_ghosthub.sh"
 chmod +x install_ghosthub.sh

@@ -8,7 +8,8 @@ GhostHub's Pi install path targets:
 
 ```text
 Hardware: Raspberry Pi 4
-OS image: 2022-01-28-raspios-bullseye-armhf-lite
+Recommended OS image: 2022-01-28-raspios-bullseye-arm64-lite
+32-bit fallback: 2022-01-28-raspios-bullseye-armhf-lite
 ```
 
 It is not currently documented as compatible with arbitrary Raspberry Pi OS images.
@@ -17,7 +18,7 @@ It is not currently documented as compatible with arbitrary Raspberry Pi OS imag
 
 Use this if you have a fresh microSD card and want GhostHub ready immediately.
 
-1. Download the ready-to-flash GhostHub image from the project download page or announcement post.
+1. Download the ready-to-flash GhostHub image from the project download page or announcement post. For B5 and newer image releases, use `arm64` for the recommended Pi 4 image or `armhf` if you need the 32-bit build.
 2. Flash it with Raspberry Pi Imager or balenaEtcher.
 3. Insert the card into the Pi and boot.
 4. Connect to the `GhostHub` Wi-Fi network.
@@ -30,6 +31,8 @@ SSID: GhostHub
 Password: ghost123
 ```
 
+Prebuilt GhostHub images ship with SSH disabled. Use the DIY install path if you need SSH enabled during setup.
+
 Plug in a USB drive with photos or videos. GhostHub discovers folders as categories and starts thumbnail/index work in the background.
 
 Full guide: [Flash The GhostHub Image](FLASH_GHOSTHUB_IMAGE.md).
@@ -39,12 +42,17 @@ Full guide: [Flash The GhostHub Image](FLASH_GHOSTHUB_IMAGE.md).
 Download the clean supported OS image from Raspberry Pi's official archive:
 
 ```text
+Recommended: 2022-01-28-raspios-bullseye-arm64-lite
+https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-01-28/2022-01-28-raspios-bullseye-arm64-lite.zip
+
+32-bit fallback: 2022-01-28-raspios-bullseye-armhf-lite
 https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip
 ```
 
 Optional checksum file:
 
 ```text
+https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-01-28/2022-01-28-raspios-bullseye-arm64-lite.zip.sha256
 https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip.sha256
 ```
 
@@ -84,7 +92,6 @@ After you are logged into the Pi, run these commands on the Pi:
 APP_TAG="$(curl -fsSL https://api.github.com/repos/BleedingXiko/GhostHub/releases \
   | sed -n 's/.*"tag_name": "\(v[0-9][0-9.]*\)".*/\1/p' \
   | head -n 1)"
-test -n "$APP_TAG" || { echo "Could not resolve latest GhostHub app release tag"; exit 1; }
 curl -L -o install_ghosthub.sh \
   "https://github.com/BleedingXiko/GhostHub/releases/download/${APP_TAG}/install_ghosthub.sh"
 chmod +x install_ghosthub.sh

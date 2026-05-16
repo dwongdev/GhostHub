@@ -23,6 +23,7 @@ SYSTEM_FOLDERS_TO_SKIP = frozenset([
     "@eaDir",
     "lost+found",
     ".ghosthub",
+    "GhostHubBackups",
     "#recycle",
     "@Recycle",
 ])

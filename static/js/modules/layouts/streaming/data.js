@@ -10,6 +10,7 @@ import { hasActiveProfile } from '../../../utils/profileUtils.js';
 
 import { getShowHiddenHeaders, appendShowHiddenParam } from '../../../utils/showHiddenManager.js';
 import { cachedFetch } from '../../../utils/requestCache.js';
+import { isUploadInProgress } from '../../../utils/uploadManager.js';
 
 import {
     fetchVideoProgressData,
@@ -207,7 +208,7 @@ export async function fetchAllCategoryMedia(forceRefresh = false, onCategoryLoad
     let loadedCount = 0;
     let nextIndex = 0;
     const totalToLoad = categoriesToLoad.length;
-    const maxConcurrency = Math.min(6, totalToLoad);
+    const maxConcurrency = Math.min(isUploadInProgress() ? 2 : 6, totalToLoad);
 
     const fetchOne = async (category) => {
         if (signal?.aborted) return;
